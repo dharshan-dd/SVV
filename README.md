@@ -88,6 +88,43 @@ Or edit `lib/app.dart` and replace the placeholder values.
 flutter run
 ```
 
+### 5. Deploy to Vercel (Auto-Deploy)
+
+The project is configured for automatic deployment on every push to `main`.
+
+#### One-Time Setup
+
+```powershell
+cd your-project-directory
+
+# 1. Add GitHub remote
+git remote add origin <your-github-repo-url>
+
+# 2. Push to main (triggers auto-deploy)
+git branch -M main
+git push -u origin main
+```
+
+#### GitHub Secrets (in repo Settings → Secrets)
+
+| Secret | Value |
+|---|---|
+| `SUPABASE_URL` | `https://hgauwydrzosafwprtsld.supabase.co` |
+| `SUPABASE_ANON_KEY` | `eyJhbGciOiJIUzI1NiIs...QEZE7U85JoZdu-9k8cDxlTuJlZF7B040eL_e_R40zyY` |
+| `VERCEL_TOKEN` | From https://vercel.com/account/settings |
+| `VERCEL_ORG_ID` | From https://vercel.com/account/settings |
+| `VERCEL_PROJECT_ID` | From your Vercel project settings |
+
+#### After Setup
+- Every push to `main` → tests run → web builds → deploys to Vercel
+- Manual deploy: `bash deploy.sh` (requires env vars set)
+
+#### Vercel Environment Variables (in Vercel dashboard)
+
+Set in project settings → Environment Variables:
+- `SUPABASE_URL`
+- `SUPABASE_ANON_KEY`
+
 ## Features
 
 ### Feature 1: Dynamic Master Data & Dropdowns
