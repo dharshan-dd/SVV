@@ -76,8 +76,8 @@ Get your Supabase project URL and anon key from:
 Set them as environment variables or update `lib/app.dart`:
 
 ```bash
-flutter run --dart-define=SUPABASE_URL=https://your-project.supabase.co
-flutter run --dart-define=SUPABASE_ANON_KEY=your-anon-key
+flutter run --dart-define=supabase_url=https://your-project.supabase.co
+flutter run --dart-define=supabase_anon_key=your-anon-key
 ```
 
 Or edit `lib/app.dart` and replace the placeholder values.
@@ -109,11 +109,11 @@ git push -u origin main
 
 | Secret | Value |
 |---|---|
-| `SUPABASE_URL` | `https://hgauwydrzosafwprtsld.supabase.co` |
-| `SUPABASE_ANON_KEY` | `eyJhbGciOiJIUzI1NiIs...QEZE7U85JoZdu-9k8cDxlTuJlZF7B040eL_e_R40zyY` |
-| `VERCEL_TOKEN` | From https://vercel.com/account/settings |
-| `VERCEL_ORG_ID` | From https://vercel.com/account/settings |
-| `VERCEL_PROJECT_ID` | From your Vercel project settings |
+| `supabase_url` | `https://hgauwydrzosafwprtsld.supabase.co` |
+| `supabase_anon_key` | `eyJhbGciOiJIUzI1NiIs...QEZE7U85JoZdu-9k8cDxlTuJlZF7B040eL_e_R40zyY` |
+| `vercel_token` | From https://vercel.com/account/settings |
+| `vercel_org_id` | From https://vercel.com/account/settings |
+| `vercel_project_id` | From your Vercel project settings |
 
 #### After Setup
 - Every push to `main` → tests run → web builds → deploys to Vercel
@@ -122,8 +122,8 @@ git push -u origin main
 #### Vercel Environment Variables (in Vercel dashboard)
 
 Set in project settings → Environment Variables:
-- `SUPABASE_URL`
-- `SUPABASE_ANON_KEY`
+- `supabase_url`
+- `supabase_anon_key`
 
 ## Features
 
