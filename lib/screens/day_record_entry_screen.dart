@@ -537,7 +537,7 @@ class _DayRecordEntryScreenState extends ConsumerState<DayRecordEntryScreen>
       const SizedBox(height: 12),
       _Field(ctrl: _collectedCtrl, label: 'Collected Amount', icon: Icons.payments_rounded),
       const SizedBox(height: 12),
-      _Field(ctrl: _extraNetCtrl, label: 'Extra Net Amount', icon: Icons.account_balance_wallet_rounded),
+      _ExtraNetRow(extraNetCtrl: _extraNetCtrl, onNetAdd: _showExtraNetDialog),
       const SizedBox(height: 12),
       _Field(ctrl: _remainingCtrl, label: 'Remaining Amount', icon: Icons.pending_rounded),
       const SizedBox(height: 12),
@@ -697,6 +697,49 @@ class _DayRecordEntryScreenState extends ConsumerState<DayRecordEntryScreen>
       ),
     );
   }
+
+  void _showExtraNetDialog() {
+    final ctrl = TextEditingController();
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: _kSurface,
+        title: Text('Add Extra Net', style: TextStyle(color: Colors.white)),
+        content: Column(mainAxisSize: MainAxisSize.min, children: [
+          Text('Add extra cash to net in hand',
+              style: TextStyle(color: Colors.grey.shade600, fontSize: 12)),
+          const SizedBox(height: 16),
+          TextField(
+            controller: ctrl,
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            style: TextStyle(color: Colors.white),
+            decoration: InputDecoration(
+              labelText: 'Amount to Add',
+              labelStyle: TextStyle(color: Colors.grey.shade600),
+              prefixIcon: Icon(Icons.account_balance_wallet_rounded, color: _kGreen),
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+              filled: true,
+              fillColor: _kSurface,
+            ),
+          ),
+        ]),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: Text('Cancel', style: TextStyle(color: Colors.grey.shade600))),
+          ElevatedButton(
+            onPressed: () {
+              final amount = double.tryParse(ctrl.text.trim()) ?? 0.0;
+              if (amount <= 0) return;
+              Navigator.pop(ctx);
+              setState(() {
+                _extraNetCtrl.text = (_d(_extraNetCtrl) + amount).toStringAsFixed(2);
+              });
+            },
+            child: Text('Add', style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 // ── Private widget classes ──────────────────────────────────────────────────
@@ -762,6 +805,51 @@ class _Skel extends StatelessWidget {
   );
 }
 
+class _ExtraNetRow extends StatelessWidget {
+  final TextEditingController extraNetCtrl;
+  final VoidCallback onNetAdd;
+  const _ExtraNetRow({required this.extraNetCtrl, required this.onNetAdd});
+  @override
+  Widget build(BuildContext context) {
+    final fmt = NumberFormat.simpleCurrency(locale: 'en_IN', decimalDigits: 2);
+    final amount = double.tryParse(extraNetCtrl.text.trim()) ?? 0.0;
+    return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+      Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+        decoration: BoxDecoration(
+          color: _kGreen.withValues(alpha: 0.06),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: _kGreen.withValues(alpha: 0.2)),
+        ),
+        child: Row(children: [
+          Expanded(
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Text('Extra Net', style: TextStyle(fontSize: 11, color: _kGreen)),
+              Text(fmt.format(amount),
+                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: _kGreen)),
+            ]),
+          ),
+          GestureDetector(
+            onTap: onNetAdd,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              decoration: BoxDecoration(
+                color: _kGreen.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: _kGreen.withValues(alpha: 0.3)),
+              ),
+              child: const Row(mainAxisSize: MainAxisSize.min, children: [
+                Icon(Icons.add_rounded, color: _kGreen, size: 14),
+                SizedBox(width: 4),
+                Text('Net+', style: TextStyle(color: _kGreen, fontSize: 12, fontWeight: FontWeight.w600)),
+              ]),
+            ),
+          ),
+        ]),
+      ),
+    ]);
+  }
+}
 class _Field extends StatelessWidget {
   final TextEditingController ctrl;
   final String label;
