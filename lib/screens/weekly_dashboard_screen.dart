@@ -6,7 +6,7 @@ import 'package:microfinance_app/models/bag_configuration.dart';
 import 'package:microfinance_app/models/collection_bag.dart';
 import 'package:microfinance_app/models/daily_cash_record.dart';
 import 'package:microfinance_app/providers/app_providers.dart';
-import 'package:microfinance_app/widgets/app_drawer.dart';
+import 'package:microfinance_app/theme/app_tokens.dart';
 
 const _kPrimary = Color(0xFF3B82F6);
 const _kGold    = Color(0xFFF59E0B);
@@ -227,7 +227,7 @@ class _WeeklyDashboardScreenState extends ConsumerState<WeeklyDashboardScreen>
 
 return Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 0),
-                        child: Column(crossAlignment: CrossAxisAlignment.stretch, children: [
+                        child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
                           const SizedBox(height: 16),
                           _weekNav(c),
                           const SizedBox(height: 16),
@@ -260,13 +260,11 @@ return Padding(
                             }),
                           ],
                         ]),
-                      );
-                          }),
-                        ],
-                      ]),
                     );
-                  })),
-            ]),
+                    }
+                ),
+              ],
+            ),
           ),
           Positioned(
             right: 16,
@@ -657,9 +655,10 @@ return Padding(
 }
 
 class _NavBtn extends StatelessWidget {
-  finalThemec icon;
+  final _ThemeColors icon;
   final VoidCallback onTap;
-  const _NavBtn({required this.icon, required this.onTap, required _ThemeColors c});
+  final _ThemeColors c;
+  const _NavBtn({required this.icon, required this.onTap, required this.c});
   @override
   Widget build(BuildContext context) => GestureDetector(
     onTap: onTap,
@@ -675,7 +674,8 @@ class _SummaryTile extends StatelessWidget {
   final String label, value;
   final Color color;
   final IconData icon;
-  const _SummaryTile({required this.label, required this.value, required this.color, required this.icon});
+  final _ThemeColors c;
+  const _SummaryTile({required this.label, required this.value, required this.color, required this.icon, required this.c});
   @override
   Widget build(BuildContext context) => Container(
     padding: const EdgeInsets.all(14),
@@ -706,7 +706,8 @@ class _DayCard extends StatefulWidget {
   final double? carryover;
   final NumberFormat fmt;
   final VoidCallback onTap;
-  const _DayCard({required this.date, required this.records, required this.carryover, required this.fmt, required this.onTap});
+  final _ThemeColors c;
+  const _DayCard({required this.date, required this.records, required this.carryover, required this.fmt, required this.onTap, required this.c});
 
   @override
   State<_DayCard> createState() => _DayCardState();
@@ -717,16 +718,16 @@ class _DayCardState extends State<_DayCard> {
   Widget build(BuildContext context) {
     final hasRecord = widget.records.isNotEmpty;
     return Card(
-      color: c.card,
+      color: widget.c.card,
       margin: const EdgeInsets.only(bottom: 12),
       child: ExpansionTile(
         initiallyExpanded: false,
         title: Row(children: [
-          const Icon(Icons.calendar_today_rounded, size: 18, color: c.subtext),
+          const Icon(Icons.calendar_today_rounded, size: 18, color: widget.c.subtext),
           const SizedBox(width: 8),
-          Expanded(child: Text(DateFormat('EEE, d MMM').format(widget.date), style: const TextStyle(color: c.text, fontWeight: FontWeight.w600, fontSize: 14))),
+          Expanded(child: Text(DateFormat('EEE, d MMM').format(widget.date), style: const TextStyle(color: widget.c.text, fontWeight: FontWeight.w600, fontSize: 14))),
           const SizedBox(width: 4),
-          Text(hasRecord ? '${widget.records.length} record${widget.records.length > 1 ? 's' : ''}' : 'No record', style: TextStyle(color: hasRecord ? c.green : c.subtext, fontSize: 12, fontWeight: FontWeight.w600)),
+          Text(hasRecord ? '${widget.records.length} record${widget.records.length > 1 ? 's' : ''}' : 'No record', style: TextStyle(color: hasRecord ? widget.c.green : widget.c.subtext, fontSize: 12, fontWeight: FontWeight.w600)),
           if (!hasRecord) ...[
             const SizedBox(width: 8),
             _CarryoverOrAddBtn(carryover: widget.carryover, fmt: widget.fmt, onTap: widget.onTap),
@@ -734,20 +735,20 @@ class _DayCardState extends State<_DayCard> {
         ]),
         children: [
           Container(
-            color: c.card,
+            color: widget.c.card,
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             child: Column(children: [
               for (final r in widget.records) ...[
-                _DetailRow('Collected', widget.fmt.format(r.collectedAmount), c.green),
-                _DetailRow('Net in Hand', widget.fmt.format(r.netAmountInHand), c.green),
-                _DetailRow('Expense', '− ${widget.fmt.format(r.expense)}', c.red),
-                _DetailRow('GPay', '− ${widget.fmt.format(r.rrGpayAmount)}', c.red),
-                _DetailRow('Adap', widget.fmt.format(r.adapAmount), c.gold),
-                _DetailRow('Other', widget.fmt.format(r.otherAmount), c.subtext),
-                const Padding(padding: EdgeInsets.symmetric(vertical: 6), child: Divider(height: 1, color: c.border)),
+                _DetailRow('Collected', widget.fmt.format(r.collectedAmount), widget.c.green),
+                _DetailRow('Net in Hand', widget.fmt.format(r.netAmountInHand), widget.c.green),
+                _DetailRow('Expense', '− ${widget.fmt.format(r.expense)}', widget.c.red),
+                _DetailRow('GPay', '− ${widget.fmt.format(r.rrGpayAmount)}', widget.c.red),
+                _DetailRow('Adap', widget.fmt.format(r.adapAmount), widget.c.gold),
+                _DetailRow('Other', widget.fmt.format(r.otherAmount), widget.c.subtext),
+                const Padding(padding: EdgeInsets.symmetric(vertical: 6), child: Divider(height: 1, color: widget.c.border)),
                 Row(mainAxisAlignment: MainAxisAlignment.spaceAround, children: [
-                  Text('Final', style: TextStyle(color: c.subtext, fontWeight: FontWeight.w700, fontSize: 13)),
-                  Text(widget.fmt.format(r.finalAmount), style: TextStyle(color: r.finalAmount >= 0 ? c.green : c.red, fontWeight: FontWeight.w900, fontSize: 16)),
+                  Text('Final', style: TextStyle(color: widget.c.subtext, fontWeight: FontWeight.w700, fontSize: 13)),
+                  Text(widget.fmt.format(r.finalAmount), style: TextStyle(color: r.finalAmount >= 0 ? widget.c.green : widget.c.red, fontWeight: FontWeight.w900, fontSize: 16)),
                 ]),
                 const SizedBox(height: 4),
                 SizedBox(
@@ -760,14 +761,14 @@ class _DayCardState extends State<_DayCard> {
                     icon: const Icon(Icons.edit_rounded, size: 16),
                     label: const Text('Edit Record'),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: c.primary.withValues(alpha: 0.15),
-                      foregroundColor: c.primary,
+                      backgroundColor: widget.c.primary.withValues(alpha: 0.15),
+                      foregroundColor: widget.c.primary,
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                       padding: const EdgeInsets.symmetric(vertical: 10),
                     ),
                   ),
                 ),
-                if (widget.records.length > 1) const Divider(height: 16, color: c.border),
+                if (widget.records.length > 1) const Divider(height: 16, color: widget.c.border),
               ],
             ]),
           ),
@@ -800,9 +801,9 @@ class _CarryoverOrAddBtn extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (carryover != null && carryover! > 0.005) {
-      return Column(crossAxisAlignment CrossAxisAlignment.end, children: [
+      return Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
         Text(fmt.format(carryover!)),
-        const Text('Last Week', style: TextStyle(color: c.subtext, fontSize: 10, fontWeight: FontWeight.w600)),
+        const Text('Last Week', style: TextStyle(color: Colors.grey, fontSize: 10, fontWeight: FontWeight.w600)),
       ]);
     }
     return _AddBtn(onTap: onTap);
@@ -811,7 +812,8 @@ class _CarryoverOrAddBtn extends StatelessWidget {
 
 class _AddBtn extends StatelessWidget {
   final VoidCallback onTap;
-  const _AddBtn({required this.onTap});
+  final _ThemeColors c;
+  const _AddBtn({required this.onTap, required this.c});
   @override
   Widget build(BuildContext context) => GestureDetector(
     onTap: onTap,
@@ -830,3 +832,4 @@ class _AddBtn extends StatelessWidget {
     ),
   );
 }
+

@@ -1,1 +1,1 @@
-{"version": 2, "builds": [{"src": "pubspec.yaml", "use": "@vercel/flutter", "env": {"supabase_url": "@supabase_url", "supabase_anon_key": "@supabase_anon_key"}}], "routes": [{"src": "/(.*)", "dest": "/index.html"}], "build": {"env": {"supabase_url": "@supabase_url", "supabase_anon_key": "@supabase_anon_key"}}}
+{"version": 2, "builds": [{"src": "build/web/index.html", "use": "@vercel/static"}], "routes": [{"src": "/(.*)", "dest": "build/web/$1"}]}
