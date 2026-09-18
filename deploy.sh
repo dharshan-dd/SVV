@@ -6,7 +6,7 @@ echo " Running tests..."
 flutter test
 
 echo "Building web..."
-flutter build web --dart-define=SUPABASE_URL=$SUPABASE_URL --dart-define=SUPABASE_ANON_KEY=$SUPABASE_ANON_KEY
+flutter build web --dart-define=supabase_url=$SUPABASE_URL --dart-define=supabase_anon_key=$SUPABASE_ANON_KEY
 
 echo "Deploying to Vercel..."
 npx vercel --prod --token=$VERCEL_TOKEN

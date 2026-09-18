@@ -30,7 +30,7 @@ jobs:
           flutter-version: "3.27.0"
           channel: stable
       - run: flutter pub get
-      - run: flutter build web --dart-define=SUPABASE_URL=${{ secrets.SUPABASE_URL }} --dart-define=SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY }}
+      - run: flutter build web --dart-define=supabase_url=${{ secrets.SUPABASE_URL }} --dart-define=supabase_anon_key=${{ secrets.SUPABASE_ANON_KEY }}
       - uses: amondnet/vercel-action@v20
         with:
           vercel_token: ${{ secrets.VERCEL_TOKEN }}
