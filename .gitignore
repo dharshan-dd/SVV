@@ -1,0 +1,41 @@
+# Flutter
+__svv_phase2_tmp/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+.pub-cache/
+.pub/
+build/
+*.iml
+*.ipr
+*.iws
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+*.log
+
+# Supabase
+.supabase/
+
+# Dart
+.dart_tool/
+*.dart_tool/
+*.g.dart
+*.freezed.dart
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Firebase
+firebase.json
+
+# Misc
+coverage/
+*.lcov
+*.cover
+*.profraw
+*.profdata
