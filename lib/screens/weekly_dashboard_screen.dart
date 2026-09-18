@@ -6,60 +6,19 @@ import 'package:microfinance_app/models/bag_configuration.dart';
 import 'package:microfinance_app/models/collection_bag.dart';
 import 'package:microfinance_app/models/daily_cash_record.dart';
 import 'package:microfinance_app/providers/app_providers.dart';
-import 'package:microfinance_app/theme/app_tokens.dart';
+import 'package:microfinance_app/widgets/app_drawer.dart';
 
+const _kBg      = Color(0xFF0A0E1A);
+const _kSurface = Color(0xFF111827);
+const _kCard    = Color(0xFF1C2333);
+const _kBorder  = Color(0xFF2A3347);
 const _kPrimary = Color(0xFF3B82F6);
 const _kGold    = Color(0xFFF59E0B);
 const _kGreen   = Color(0xFF10B981);
 const _kRed     = Color(0xFFEF4444);
 const _kPurple  = Color(0xFF8B5CF6);
-
-/// Resolves the screen's palette from the active [AppTokens] so that theme
-/// changes (light / dark / navy / high-contrast) flow through instantly.
-class _ThemeColors {
-  final Color bg;
-  final Color surface;
-  final Color card;
-  final Color border;
-  final Color primary;
-  final Color gold;
-  final Color green;
-  final Color red;
-  final Color purple;
-  final Color text;
-  final Color subtext;
-
-  const _ThemeColors({
-    required this.bg,
-    required this.surface,
-    required this.card,
-    required this.border,
-    required this.primary,
-    required this.gold,
-    required this.green,
-    required this.red,
-    required this.purple,
-    required this.text,
-    required this.subtext,
-  });
-
-  factory _ThemeColors.of(BuildContext context) {
-    final t = context.tokens;
-    return _ThemeColors(
-      bg: t.background,
-      surface: t.surface,
-      card: t.card,
-      border: t.border,
-      primary: t.primary,
-      gold: t.accent,
-      green: t.success,
-      red: t.danger,
-      purple: t.info,
-      text: t.foreground,
-      subtext: t.mutedForeground,
-    );
-  }
-}
+const _kText    = Color(0xFFF1F5F9);
+const _kSubtext = Color(0xFF94A3B8);
 
 class WeeklyDashboardScreen extends ConsumerStatefulWidget {
   const WeeklyDashboardScreen({super.key});
@@ -121,7 +80,7 @@ class _WeeklyDashboardScreenState extends ConsumerState<WeeklyDashboardScreen>
   Widget build(BuildContext context) {
     final fmt = NumberFormat.simpleCurrency(locale: 'en_IN', decimalDigits: 2);
     return Scaffold(
-      backgroundColor: c.bg,
+      backgroundColor: _kBg,
       drawer: const AppDrawer(),
       body: Stack(
         children: [
@@ -139,63 +98,34 @@ class _WeeklyDashboardScreenState extends ConsumerState<WeeklyDashboardScreen>
                     if (snap.hasError) return _buildError(snap.error);
 
                     final records = snap.data ?? [];
+                    final sortedByUpdated = [...records]
+                      ..sort((a, b) => a.updatedAt.compareTo(b.updatedAt));
 
-                    // 1. Latest record per (bagId, entryDate) — deduplicates rows that share the same bag+date
-                    final latestPerBagDate = <String, DailyCashRecord>{};
-                    for (final r in records) {
-                      final key = '${r.bagId}|${DateFormat('yyyy-MM-dd').format(r.entryDate)}';
-                      final ex = latestPerBagDate[key];
-                      if (ex == null || r.updatedAt.isAfter(ex.updatedAt)) {
-                        latestPerBagDate[key] = r;
-                      }
+                    final currentWeekRecords = sortedByUpdated.where((r) =>
+                        !r.entryDate.isBefore(weekStart) && !r.entryDate.isAfter(weekEnd)
+                    ).toList();
+
+                    double runningTotal = 0.0;
+                    for (final r in sortedByUpdated) {
+                      runningTotal = r.finalAmount;
                     }
-                    final deduped = latestPerBagDate.values.toList();
 
-                    // 2. Records belonging to the current week
-                    final currentWeekRecords = deduped
-                        .where((r) =>
-                            !r.entryDate.isBefore(weekStart) &&
-                            !r.entryDate.isAfter(weekEnd))
-                        .toList();
-
-                    // 3. Running total = latest finalAmount per bag across ALL fetched records (before week)
-                    //    (ordered by updatedAt so the newest record wins)
                     final latestPerBag = <String, DailyCashRecord>{};
-                    for (final r in deduped) {
-                      final ex = latestPerBag[r.bagId];
-                      if (ex == null || r.updatedAt.isAfter(ex.updatedAt)) {
+                    for (final r in sortedByUpdated) {
+                      if (!r.entryDate.isBefore(weekStart) && !r.entryDate.isAfter(weekEnd)) {
                         latestPerBag[r.bagId] = r;
                       }
                     }
-                    final runningTotal = latestPerBag.values.fold(
-                      0.0,
-                      (s, r) => s + r.finalAmount,
-                    );
-
-                    // 4. Week Final = sum of the latest record per bag within the current week
-                    final latestPerBagInWeek = <String, DailyCashRecord>{};
-                    for (final r in currentWeekRecords) {
-                      final ex = latestPerBagInWeek[r.bagId];
-                      if (ex == null || r.updatedAt.isAfter(ex.updatedAt)) {
-                        latestPerBagInWeek[r.bagId] = r;
-                      }
-                    }
-                    final weekFinal = latestPerBagInWeek.values.fold(
+                    final weekFinal = latestPerBag.values.fold(
                       0.0,
                       (s, r) => s + r.finalAmount,
                     );
 
                     final totalCollected = currentWeekRecords.fold(0.0, (s, r) => s + r.collectedAmount);
+                    final totalAdditionalCollection = currentWeekRecords.fold(0.0, (s, r) => s + r.additionalCollection);
                     final totalExpense = currentWeekRecords.fold(0.0, (s, r) => s + r.expense);
                     final totalGiven = currentWeekRecords.fold(0.0, (s, r) => s + r.adapAmount);
                     final totalGpay = currentWeekRecords.fold(0.0, (s, r) => s + r.rrGpayAmount);
-
-                    // Build lookup of all deduped records by date
-                    final dedupedByDate = <String, List<DailyCashRecord>>{};
-                    for (final r in deduped) {
-                      final key = DateFormat('yyyy-MM-dd').format(r.entryDate);
-                      dedupedByDate.putIfAbsent(key, () => []).add(r);
-                    }
 
                     final currentWeekDates = <String>{};
                     final recordsByDate = <String, List<DailyCashRecord>>{};
@@ -204,67 +134,60 @@ class _WeeklyDashboardScreenState extends ConsumerState<WeeklyDashboardScreen>
                       currentWeekDates.add(key);
                       recordsByDate.putIfAbsent(key, () => []).add(r);
                     }
+                    final daysRecorded = currentWeekDates.length;
 
-                    // For days without current week records, show same day's data from last week
+                    final carryoverByDate = <String, double>{};
                     for (int i = 0; i < 7; i++) {
                       final date = weekStart.add(Duration(days: i));
                       final key = DateFormat('yyyy-MM-dd').format(date);
                       if (!currentWeekDates.contains(key)) {
-                        final prevDate = date.subtract(const Duration(days: 7));
-                        final prevKey = DateFormat('yyyy-MM-dd').format(prevDate);
-                        final prevRecords = dedupedByDate[prevKey];
-                        if (prevRecords != null && prevRecords.isNotEmpty) {
-                          recordsByDate[key] = prevRecords;
-                        }
+                        carryoverByDate[key] = runningTotal;
                       }
                     }
 
-                    final daysRecorded = currentWeekDates.length;
-
-                    // Carryover not shown — days without records show last week's
-                    // same-day data above (if available) or "Add" button
-                    final carryoverByDate = <String, double>{};
-
-return Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 0),
-                        child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-                          const SizedBox(height: 16),
-                          _weekNav(c),
-                          const SizedBox(height: 16),
-                          _buildBagFilter(c, fmt),
-                          const SizedBox(height: 16),
-                          _summaryRow(fmt, weekFinal, totalCollected, totalExpense, totalGiven, totalGpay, daysRecorded, c),
-                          if (_selectedBagIds.isNotEmpty) ...[
-                            const SizedBox(height: 24),
-                            _perBagAnalysis(currentWeekRecords, fmt, c),
-                          ],
-                          const SizedBox(height: 24),
-                          _sectionLabel('Day Records', c),
-                          const SizedBox(height: 12),
-                          for (int i = 0; i < 7; i++) ...[
-                            Builder(builder: (_) {
-                              final date = weekStart.add(Duration(days: i));
-                              final key = DateFormat('yyyy-MM-dd').format(date);
-                              return _DayCard(
-                                date: date,
-                                records: recordsByDate[key] ?? const [],
-                                carryover: carryoverByDate[key],
-                                fmt: fmt,
-                                c: c,
-                                onTap: () async {
-                                  final dateStr = DateFormat('yyyy-MM-dd').format(date);
+                     return Padding(
+                       padding: const EdgeInsets.fromLTRB(16, 0, 16, 40),
+                       child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+                         const SizedBox(height: 16),
+                         _weekNav(),
+                         const SizedBox(height: 16),
+                         _buildBagFilter(fmt),
+                         const SizedBox(height: 16),
+                          _summaryRow(fmt, weekFinal, totalCollected, totalAdditionalCollection, totalExpense, totalGiven, totalGpay, daysRecorded),
+                         if (_selectedBagIds.isNotEmpty) ...[
+                           const SizedBox(height: 24),
+                           _perBagAnalysis(snap.data ?? [], fmt),
+                         ],
+                        const SizedBox(height: 24),
+                        _sectionLabel('Day Records'),
+                        const SizedBox(height: 12),
+                        for (int i = 0; i < 7; i++) ...[
+                          Builder(builder: (_) {
+                            final date = weekStart.add(Duration(days: i));
+                            final key = DateFormat('yyyy-MM-dd').format(date);
+                            return _DayCard(
+                              date: date,
+                              records: recordsByDate[key] ?? const [],
+                              carryover: carryoverByDate[key],
+                              fmt: fmt,
+                              onTap: () async {
+                                final dateStr = DateFormat('yyyy-MM-dd').format(date);
+                                final recs = recordsByDate[key] ?? [];
+                                if (recs.isNotEmpty) {
+                                  final r0 = recs.first;
+                                  await context.push('/day-record-entry?date=$dateStr&regionId=${r0.regionId}&modelId=${r0.modelId}&bagId=${r0.bagId}');
+                                } else {
                                   await context.push('/day-record-entry?date=$dateStr');
-                                  if (mounted) setState(() => _loadRecords());
-                                },
-                              );
-                            }),
-                          ],
-                        ]),
+                                }
+                                if (mounted) setState(() => _loadRecords());
+                              },
+                            );
+                          }),
+                        ],
+                      ]),
                     );
-                    }
-                ),
-              ],
-            ),
+                  })),
+            ]),
           ),
           Positioned(
             right: 16,
@@ -272,9 +195,9 @@ return Padding(
             child: FloatingActionButton.extended(
               heroTag: 'addWeeklyRecord',
               onPressed: _showAddRecordDialog,
-              icon: const Icon(Icons.add_rounded, color: c.text),
-              label: const Text('Record', style: TextStyle(color: c.text, fontSize: 13, fontWeight: FontWeight.w600)),
-              backgroundColor: c.primary,
+              icon: const Icon(Icons.add_rounded, color: _kText),
+              label: const Text('Record', style: TextStyle(color: _kText, fontSize: 13, fontWeight: FontWeight.w600)),
+              backgroundColor: _kPrimary,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             ),
           ),
@@ -283,7 +206,7 @@ return Padding(
     );
   }
 
-  Widget _buildBagFilter(_ThemeColors c, NumberFormat fmt) {
+  Widget _buildBagFilter(NumberFormat fmt) {
     return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
       Row(children: [
         Expanded(
@@ -292,30 +215,30 @@ return Padding(
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
               decoration: BoxDecoration(
-                color: c.card,
+                color: _kCard,
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: c.border),
+                border: Border.all(color: _kBorder),
               ),
               child: Row(children: [
-                const Icon(Icons.filter_alt_rounded, color: c.subtext, size: 18),
+                const Icon(Icons.filter_alt_rounded, color: _kSubtext, size: 18),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
                     _selectedBagIds.isEmpty
                         ? 'Select bags for analysis'
                         : '${_selectedBagIds.length} bag(s) selected',
-                    style: const TextStyle(color: c.text, fontSize: 13),
+                    style: const TextStyle(color: _kText, fontSize: 13),
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
-                const Icon(Icons.arrow_drop_down_rounded, color: c.subtext, size: 18),
+                const Icon(Icons.arrow_drop_down_rounded, color: _kSubtext, size: 18),
                 ]),
                 )),
                           ),
         if (_selectedBagIds.isNotEmpty)
           TextButton(
             onPressed: () => setState(() { _selectedBagIds.clear(); _loadRecords(); }),
-            child: const Text('Clear', style: TextStyle(color: c.subtext, fontSize: 12)),
+            child: const Text('Clear', style: TextStyle(color: _kSubtext, fontSize: 12)),
           ),
       ]),
     if (_selectedBagIds.isNotEmpty)
@@ -328,12 +251,12 @@ return Padding(
                 builder: (context, snap) {
                   final name = snap.data ?? bagId.substring(0, 8);
                   return Chip(
-                    label: Text(name, style: const TextStyle(color: c.text, fontSize: 11)),
-                    backgroundColor: c.primary.withValues(alpha: 0.12),
+                    label: Text(name, style: const TextStyle(color: _kText, fontSize: 11)),
+                    backgroundColor: _kPrimary.withValues(alpha: 0.12),
                     side: BorderSide.none,
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                     onDeleted: () => setState(() { _selectedBagIds.remove(bagId); _loadRecords(); }),
-                    deleteIcon: const Icon(Icons.close_rounded, size: 14, color: c.text),
+                    deleteIcon: const Icon(Icons.close_rounded, size: 14, color: _kText),
                   );
                 },
               ),
@@ -353,15 +276,15 @@ return Padding(
     }
   }
 
-  void _showBagSelector(_ThemeColors c) {
+  void _showBagSelector() {
     showDialog(
       context: context,
       builder: (dialogCtx) {
         return StatefulBuilder(
           builder: (ctx, setDialogState) {
             return AlertDialog(
-              backgroundColor: c.card,
-              title: const Text('Select Bags', style: TextStyle(color: c.text)),
+              backgroundColor: _kCard,
+              title: const Text('Select Bags', style: TextStyle(color: _kText)),
               content: SizedBox(
                 width: double.maxFinite,
                 height: 300,
@@ -372,7 +295,7 @@ return Padding(
                       data: (bags) => Scrollable(
                         viewportBuilder: (ctx, _) => ListView(
                           children: bags.map((b) => CheckboxListTile(
-                            title: Text(b.name, style: const TextStyle(color: c.text, fontSize: 13)),
+                            title: Text(b.name, style: const TextStyle(color: _kText, fontSize: 13)),
                             value: _selectedBagIds.contains(b.id),
                             onChanged: (v) => setDialogState(() {
                               if (v != null && v) {
@@ -381,19 +304,19 @@ return Padding(
                                 _selectedBagIds.remove(b.id);
                               }
           }),
-                            fillColor: WidgetStateProperty.all(c.primary),
-                            side: const BorderSide(color: c.border),
+                            fillColor: WidgetStateProperty.all(_kPrimary),
+                            side: const BorderSide(color: _kBorder),
                           )).toList(),
                         ),
                       ),
                       loading: () => const Center(child: CircularProgressIndicator()),
-                      error: (e, _) => Text('Error: $e', style: TextStyle(color: c.red)),
+                      error: (e, _) => Text('Error: $e', style: TextStyle(color: _kRed)),
                     );
                   },
                 ),
               ),
               actions: [
-                TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel', style: TextStyle(color: c.subtext))),
+                TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel', style: TextStyle(color: _kSubtext))),
                 ElevatedButton(onPressed: () {
                   Navigator.pop(ctx);
                   setState(() => _loadRecords());
@@ -406,7 +329,7 @@ return Padding(
     );
   }
 
-  Widget _perBagAnalysis(List<DailyCashRecord> records, NumberFormat fmt, _ThemeColors c) {
+  Widget _perBagAnalysis(List<DailyCashRecord> records, NumberFormat fmt) {
     final bagIds = _selectedBagIds.toList();
     return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
       _sectionLabel('Per-Bag Analysis'),
@@ -421,32 +344,38 @@ return Padding(
               return Container(
                 margin: const EdgeInsets.only(bottom: 10),
                 padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(color: c.card, borderRadius: BorderRadius.circular(12), border: Border.all(color: c.border)),
-                child: Text('$bagName: No records', style: TextStyle(color: c.subtext, fontSize: 12)),
+                decoration: BoxDecoration(color: _kCard, borderRadius: BorderRadius.circular(12), border: Border.all(color: _kBorder)),
+                child: Text('$bagName: No records', style: TextStyle(color: _kSubtext, fontSize: 12)),
               );
             }
-            // Deduplicate: keep the latest record per entryDate for this bag
-            final byDate = <String, DailyCashRecord>{};
+            final bagMap = <String, DailyCashRecord>{};
             for (final r in bagRecords) {
               final key = DateFormat('yyyy-MM-dd').format(r.entryDate);
-              final ex = byDate[key];
-              if (ex == null || r.updatedAt.isAfter(ex.updatedAt)) byDate[key] = r;
+              final ex = bagMap[key];
+              if (ex == null || r.updatedAt.isAfter(ex.updatedAt)) bagMap[key] = r;
             }
-            final sortedBag = byDate.values.toList()
+            final sortedBag = bagMap.values.toList()
               ..sort((a, b) => a.entryDate.compareTo(b.entryDate));
 
-            // Week Final = latest finalAmount across all fetched records for this bag
-            double bagFinal = 0.0;
-            if (sortedBag.isNotEmpty) bagFinal = sortedBag.last.finalAmount;
-
-            // Count only distinct dates that fall within the current week
-            final daysInWeek = sortedBag
-                .where((r) =>
-                    !r.entryDate.isBefore(weekStart) &&
-                    !r.entryDate.isAfter(weekEnd))
-                .length;
+            final allByDateBag = <String, DailyCashRecord>{};
+            for (final r in bagRecords) {
+              final key = DateFormat('yyyy-MM-dd').format(r.entryDate);
+              final ex = allByDateBag[key];
+              if (ex == null || r.updatedAt.isAfter(ex.updatedAt)) allByDateBag[key] = r;
+            }
+            final sortedAllBag = allByDateBag.values.toList()
+              ..sort((a, b) => a.entryDate.compareTo(b.entryDate));
+            final bagWeekFinal = sortedBag.isNotEmpty
+                ? sortedBag.last.finalAmount
+                : 0.0;
+            double bagRunning = 0.0;
+            for (final r in sortedAllBag) {
+              bagRunning = r.finalAmount;
+            }
+            final bagFinal = sortedBag.isNotEmpty ? bagWeekFinal : bagRunning;
 
             final bagCollected = bagRecords.fold(0.0, (s, r) => s + r.collectedAmount);
+            final bagAdditionalCollection = bagRecords.fold(0.0, (s, r) => s + r.additionalCollection);
             final bagExpense = bagRecords.fold(0.0, (s, r) => s + r.expense);
             final bagGiven = bagRecords.fold(0.0, (s, r) => s + r.adapAmount);
             final bagGpay = bagRecords.fold(0.0, (s, r) => s + r.rrGpayAmount);
@@ -455,14 +384,14 @@ return Padding(
               margin: const EdgeInsets.only(bottom: 12),
               padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
-                color: c.card,
+                color: _kCard,
                 borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: c.border),
+                border: Border.all(color: _kBorder),
               ),
               child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-                Text(bagName, style: TextStyle(color: c.text, fontSize: 14, fontWeight: FontWeight.w700)),
+                Text(bagName, style: TextStyle(color: _kText, fontSize: 14, fontWeight: FontWeight.w700)),
                 const SizedBox(height: 12),
-                _summaryRow(fmt, bagFinal, bagCollected, bagExpense, bagGiven, bagGpay, daysInWeek),
+                _summaryRow(fmt, bagFinal, bagCollected, bagAdditionalCollection, bagExpense, bagGiven, bagGpay, sortedBag.length),
               ]),
             );
           },
@@ -470,33 +399,33 @@ return Padding(
     ]);
   }
 
-  Widget _buildAppBar(_ThemeColors c) => SliverAppBar(
+  Widget _buildAppBar() => SliverAppBar(
     pinned: true,
-    backgroundColor: c.surface,
-    foregroundColor: c.text,
+    backgroundColor: _kSurface,
+    foregroundColor: _kText,
     elevation: 0,
-    title: const Text('Weekly Dashboard', style: TextStyle(color: c.text, fontWeight: FontWeight.w700, fontSize: 18)),
+    title: const Text('Weekly Dashboard', style: TextStyle(color: _kText, fontWeight: FontWeight.w700, fontSize: 18)),
     actions: [
       IconButton(
-        icon: const Icon(Icons.refresh_rounded, color: c.subtext),
+        icon: const Icon(Icons.refresh_rounded, color: _kSubtext),
         onPressed: () => setState(() { _loadRecords(); _animCtrl.forward(from: 0); }),
       ),
     ],
   );
 
-  Widget _weekNav(_ThemeColors c) => Container(
+  Widget _weekNav() => Container(
     padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
-    decoration: BoxDecoration(color: c.card, borderRadius: BorderRadius.circular(14), border: Border.all(color: c.border)),
+    decoration: BoxDecoration(color: _kCard, borderRadius: BorderRadius.circular(14), border: Border.all(color: _kBorder)),
     child: Row(children: [
       _NavBtn(icon: Icons.chevron_left_rounded, onTap: () => _changeWeek(-1)),
       Expanded(child: Column(children: [
         Text(
           '${DateFormat('d MMM').format(weekStart)} – ${DateFormat('d MMM yyyy').format(weekEnd)}',
-          style: const TextStyle(color: c.text, fontWeight: FontWeight.w700, fontSize: 14),
+          style: const TextStyle(color: _kText, fontWeight: FontWeight.w700, fontSize: 14),
           textAlign: TextAlign.center,
         ),
         const SizedBox(height: 2),
-        Text('Week ${_weekNumber(weekStart)}', style: const TextStyle(color: c.subtext, fontSize: 11)),
+        Text('Week ${_weekNumber(weekStart)}', style: const TextStyle(color: _kSubtext, fontSize: 11)),
       ])),
       _NavBtn(icon: Icons.chevron_right_rounded, onTap: () => _changeWeek(1)),
     ]),
@@ -507,54 +436,57 @@ return Padding(
     return ((d.difference(startOfYear).inDays + startOfYear.weekday) / 7).ceil();
   }
 
-  Widget _summaryRow(NumberFormat fmt, double weekFinal, double collected, double expense, double given, double gpay, int days, _ThemeColors c) {
+  Widget _summaryRow(NumberFormat fmt, double weekFinal, double collected, double additionalCollection, double expense, double given, double gpay, int days) {
     return Column(children: [
       Row(children: [
-        Expanded(child: _SummaryTile(label: 'Week Final', value: fmt.format(weekFinal), color: weekFinal >= 0 ? c.green : c.red, icon: Icons.account_balance_rounded)),
+        Expanded(child: _SummaryTile(label: 'Week Final', value: fmt.format(weekFinal), color: weekFinal >= 0 ? _kGreen : _kRed, icon: Icons.account_balance_rounded)),
         const SizedBox(width: 10),
-        Expanded(child: _SummaryTile(label: 'Collected', value: fmt.format(collected), color: c.primary, icon: Icons.payments_rounded)),
+        Expanded(child: _SummaryTile(label: 'Collected', value: fmt.format(collected - additionalCollection), color: _kPrimary, icon: Icons.payments_rounded)),
+        const SizedBox(width: 10),
+        if (additionalCollection > 0)
+          Expanded(child: _SummaryTile(label: '+ Additional', value: fmt.format(additionalCollection), color: _kGold, icon: Icons.account_balance_wallet_rounded)),
       ]),
       const SizedBox(height: 10),
       Row(children: [
-        Expanded(child: _SummaryTile(label: 'Amount Given', value: fmt.format(given), color: c.gold, icon: Icons.account_balance_wallet_rounded)),
+        Expanded(child: _SummaryTile(label: 'Amount Given', value: fmt.format(given), color: _kGold, icon: Icons.account_balance_wallet_rounded)),
         const SizedBox(width: 10),
-        Expanded(child: _SummaryTile(label: 'Expenses', value: fmt.format(expense), color: c.red, icon: Icons.receipt_rounded)),
+        Expanded(child: _SummaryTile(label: 'Expenses', value: fmt.format(expense), color: _kRed, icon: Icons.receipt_rounded)),
       ]),
       const SizedBox(height: 10),
       Row(children: [
-        Expanded(child: _SummaryTile(label: 'Days Recorded', value: '$days / 7', color: c.gold, icon: Icons.calendar_today_rounded)),
+        Expanded(child: _SummaryTile(label: 'Days Recorded', value: '$days / 7', color: _kGold, icon: Icons.calendar_today_rounded)),
         const SizedBox(width: 10),
-        Expanded(child: _SummaryTile(label: 'GPay', value: fmt.format(gpay), color: c.purple, icon: Icons.swap_horiz_rounded)),
+        Expanded(child: _SummaryTile(label: 'GPay', value: fmt.format(gpay), color: _kPurple, icon: Icons.swap_horiz_rounded)),
       ]),
     ]);
   }
 
-  Widget _sectionLabel(String text, _ThemeColors c) => Row(children: [
-    Container(width: 3, height: 16, decoration: BoxDecoration(color: c.primary, borderRadius: BorderRadius.circular(2))),
+  Widget _sectionLabel(String text) => Row(children: [
+    Container(width: 3, height: 16, decoration: BoxDecoration(color: _kPrimary, borderRadius: BorderRadius.circular(2))),
     const SizedBox(width: 8),
-    Text(text, style: const TextStyle(color: c.text, fontSize: 14, fontWeight: FontWeight.w700)),
+    Text(text, style: const TextStyle(color: _kText, fontSize: 14, fontWeight: FontWeight.w700)),
   ]);
 
-  Widget _buildLoading(_ThemeColors c) => Padding(
+  Widget _buildLoading() => Padding(
     padding: const EdgeInsets.all(16),
     child: Column(children: List.generate(4, (_) => Padding(
       padding: const EdgeInsets.only(bottom: 12),
-      child: Container(height: 80, decoration: BoxDecoration(color: c.card, borderRadius: BorderRadius.circular(14))),
+      child: Container(height: 80, decoration: BoxDecoration(color: _kCard, borderRadius: BorderRadius.circular(14))),
     ))),
   );
 
-  Widget _buildError(Object? error, _ThemeColors c) => Padding(
+  Widget _buildError(Object? error) => Padding(
     padding: const EdgeInsets.all(32),
     child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-      const Icon(Icons.error_outline_rounded, size: 48, color: c.red),
+      const Icon(Icons.error_outline_rounded, size: 48, color: _kRed),
       const SizedBox(height: 16),
-      const Text('Failed to load records', style: TextStyle(color: c.text, fontSize: 16, fontWeight: FontWeight.w600)),
+      const Text('Failed to load records', style: TextStyle(color: _kText, fontSize: 16, fontWeight: FontWeight.w600)),
       const SizedBox(height: 8),
-      Text('$error', style: const TextStyle(color: c.subtext, fontSize: 12), textAlign: TextAlign.center),
+      Text('$error', style: const TextStyle(color: _kSubtext, fontSize: 12), textAlign: TextAlign.center),
     ]),
   );
 
-  void _showAddRecordDialog(_ThemeColors c) async {
+  void _showAddRecordDialog() async {
     final svc = ref.read(supabaseServiceProvider);
     final List<CollectionBag> bags;
     try {
@@ -562,7 +494,7 @@ return Padding(
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e'), backgroundColor: c.red),
+          SnackBar(content: Text('Error: $e'), backgroundColor: _kRed),
         );
       }
       return;
@@ -570,7 +502,7 @@ return Padding(
     if (bags.isEmpty) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('No bags available'), backgroundColor: c.red),
+          const SnackBar(content: Text('No bags available'), backgroundColor: _kRed),
         );
       }
       return;
@@ -583,8 +515,8 @@ return Padding(
           valueListenable: pick,
           builder: (dialogCtx, picked, child) {
             return AlertDialog(
-              backgroundColor: c.card,
-              title: const Text('Select Bag', style: TextStyle(color: c.text)),
+              backgroundColor: _kCard,
+              title: const Text('Select Bag', style: TextStyle(color: _kText)),
               content: SizedBox(
                 width: double.maxFinite,
                 height: 300,
@@ -592,14 +524,14 @@ return Padding(
                   children: bags.map((bag) {
                     final isSelected = picked == bag.id;
                     return Card(
-                      color: isSelected ? c.primary.withValues(alpha: 0.15) : c.surface,
+                      color: isSelected ? _kPrimary.withValues(alpha: 0.15) : _kSurface,
                       margin: const EdgeInsets.symmetric(vertical: 4),
                       child: ListTile(
-                        title: Text(bag.name, style: const TextStyle(color: c.text)),
+                        title: Text(bag.name, style: const TextStyle(color: _kText)),
                         leading: CircleAvatar(
-                          backgroundColor: isSelected ? c.primary : c.border,
+                          backgroundColor: isSelected ? _kPrimary : _kBorder,
                           child: isSelected
-                              ? const Icon(Icons.check_rounded, color: c.text, size: 16)
+                              ? const Icon(Icons.check_rounded, color: _kText, size: 16)
                               : null,
                         ),
                         onTap: () => pick.value = bag.id,
@@ -611,7 +543,7 @@ return Padding(
               actions: [
                 TextButton(
                   onPressed: () => Navigator.pop(ctx, ''),
-                  child: const Text('Cancel', style: TextStyle(color: c.subtext)),
+                  child: const Text('Cancel', style: TextStyle(color: _kSubtext)),
                 ),
                 ElevatedButton(
                   onPressed: picked != null
@@ -619,7 +551,7 @@ return Padding(
                           Navigator.pop(ctx, picked);
                         }
                       : null,
-                  child: const Text('Next', style: TextStyle(color: c.text)),
+                  child: const Text('Next', style: TextStyle(color: _kText)),
                 ),
               ],
             );
@@ -655,17 +587,16 @@ return Padding(
 }
 
 class _NavBtn extends StatelessWidget {
-  final _ThemeColors icon;
+  final IconData icon;
   final VoidCallback onTap;
-  final _ThemeColors c;
-  const _NavBtn({required this.icon, required this.onTap, required this.c});
+  const _NavBtn({required this.icon, required this.onTap});
   @override
   Widget build(BuildContext context) => GestureDetector(
     onTap: onTap,
     child: Container(
       padding: const EdgeInsets.all(8),
-      decoration: BoxDecoration(color: c.border, borderRadius: BorderRadius.circular(10)),
-      child: Icon(icon, color: c.text, size: 20),
+      decoration: BoxDecoration(color: _kBorder, borderRadius: BorderRadius.circular(10)),
+      child: Icon(icon, color: _kText, size: 20),
     ),
   );
 }
@@ -674,13 +605,12 @@ class _SummaryTile extends StatelessWidget {
   final String label, value;
   final Color color;
   final IconData icon;
-  final _ThemeColors c;
-  const _SummaryTile({required this.label, required this.value, required this.color, required this.icon, required this.c});
+  const _SummaryTile({required this.label, required this.value, required this.color, required this.icon});
   @override
   Widget build(BuildContext context) => Container(
     padding: const EdgeInsets.all(14),
     decoration: BoxDecoration(
-      color: c.card,
+      color: _kCard,
       borderRadius: BorderRadius.circular(14),
       border: Border.all(color: color.withValues(alpha: 0.2)),
     ),
@@ -692,7 +622,7 @@ class _SummaryTile extends StatelessWidget {
       ),
       const SizedBox(width: 10),
       Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Text(label, style: const TextStyle(color: c.subtext, fontSize: 10)),
+        Text(label, style: const TextStyle(color: _kSubtext, fontSize: 10)),
         const SizedBox(height: 2),
         Text(value, style: TextStyle(color: color, fontSize: 13, fontWeight: FontWeight.w800)),
       ])),
@@ -706,8 +636,7 @@ class _DayCard extends StatefulWidget {
   final double? carryover;
   final NumberFormat fmt;
   final VoidCallback onTap;
-  final _ThemeColors c;
-  const _DayCard({required this.date, required this.records, required this.carryover, required this.fmt, required this.onTap, required this.c});
+  const _DayCard({required this.date, required this.records, required this.carryover, required this.fmt, required this.onTap});
 
   @override
   State<_DayCard> createState() => _DayCardState();
@@ -718,16 +647,16 @@ class _DayCardState extends State<_DayCard> {
   Widget build(BuildContext context) {
     final hasRecord = widget.records.isNotEmpty;
     return Card(
-      color: widget.c.card,
+      color: _kCard,
       margin: const EdgeInsets.only(bottom: 12),
       child: ExpansionTile(
         initiallyExpanded: false,
         title: Row(children: [
-          const Icon(Icons.calendar_today_rounded, size: 18, color: widget.c.subtext),
+          const Icon(Icons.calendar_today_rounded, size: 18, color: _kSubtext),
           const SizedBox(width: 8),
-          Expanded(child: Text(DateFormat('EEE, d MMM').format(widget.date), style: const TextStyle(color: widget.c.text, fontWeight: FontWeight.w600, fontSize: 14))),
+          Expanded(child: Text(DateFormat('EEE, d MMM').format(widget.date), style: const TextStyle(color: _kText, fontWeight: FontWeight.w600, fontSize: 14))),
           const SizedBox(width: 4),
-          Text(hasRecord ? '${widget.records.length} record${widget.records.length > 1 ? 's' : ''}' : 'No record', style: TextStyle(color: hasRecord ? widget.c.green : widget.c.subtext, fontSize: 12, fontWeight: FontWeight.w600)),
+          Text(hasRecord ? '${widget.records.length} record${widget.records.length > 1 ? 's' : ''}' : 'No record', style: TextStyle(color: hasRecord ? _kGreen : _kSubtext, fontSize: 12, fontWeight: FontWeight.w600)),
           if (!hasRecord) ...[
             const SizedBox(width: 8),
             _CarryoverOrAddBtn(carryover: widget.carryover, fmt: widget.fmt, onTap: widget.onTap),
@@ -735,20 +664,22 @@ class _DayCardState extends State<_DayCard> {
         ]),
         children: [
           Container(
-            color: widget.c.card,
+            color: _kCard,
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             child: Column(children: [
               for (final r in widget.records) ...[
-                _DetailRow('Collected', widget.fmt.format(r.collectedAmount), widget.c.green),
-                _DetailRow('Net in Hand', widget.fmt.format(r.netAmountInHand), widget.c.green),
-                _DetailRow('Expense', '− ${widget.fmt.format(r.expense)}', widget.c.red),
-                _DetailRow('GPay', '− ${widget.fmt.format(r.rrGpayAmount)}', widget.c.red),
-                _DetailRow('Adap', widget.fmt.format(r.adapAmount), widget.c.gold),
-                _DetailRow('Other', widget.fmt.format(r.otherAmount), widget.c.subtext),
-                const Padding(padding: EdgeInsets.symmetric(vertical: 6), child: Divider(height: 1, color: widget.c.border)),
+                _DetailRow('Collected', widget.fmt.format(r.collectedAmount - r.additionalCollection), _kGreen),
+                if (r.additionalCollection > 0)
+                  _DetailRow('+ Additional Collection', widget.fmt.format(r.additionalCollection), _kGold),
+                _DetailRow('Net in Hand', widget.fmt.format(r.netAmountInHand), _kGreen),
+                _DetailRow('Expense', '− ${widget.fmt.format(r.expense)}', _kRed),
+                _DetailRow('GPay', '− ${widget.fmt.format(r.rrGpayAmount)}', _kRed),
+                _DetailRow('Adap', widget.fmt.format(r.adapAmount), _kGold),
+                _DetailRow('Other', widget.fmt.format(r.otherAmount), _kSubtext),
+                const Padding(padding: EdgeInsets.symmetric(vertical: 6), child: Divider(height: 1, color: _kBorder)),
                 Row(mainAxisAlignment: MainAxisAlignment.spaceAround, children: [
-                  Text('Final', style: TextStyle(color: widget.c.subtext, fontWeight: FontWeight.w700, fontSize: 13)),
-                  Text(widget.fmt.format(r.finalAmount), style: TextStyle(color: r.finalAmount >= 0 ? widget.c.green : widget.c.red, fontWeight: FontWeight.w900, fontSize: 16)),
+                  Text('Final', style: TextStyle(color: _kSubtext, fontWeight: FontWeight.w700, fontSize: 13)),
+                  Text(widget.fmt.format(r.finalAmount), style: TextStyle(color: r.finalAmount >= 0 ? _kGreen : _kRed, fontWeight: FontWeight.w900, fontSize: 16)),
                 ]),
                 const SizedBox(height: 4),
                 SizedBox(
@@ -761,14 +692,14 @@ class _DayCardState extends State<_DayCard> {
                     icon: const Icon(Icons.edit_rounded, size: 16),
                     label: const Text('Edit Record'),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: widget.c.primary.withValues(alpha: 0.15),
-                      foregroundColor: widget.c.primary,
+                      backgroundColor: _kPrimary.withValues(alpha: 0.15),
+                      foregroundColor: _kPrimary,
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                       padding: const EdgeInsets.symmetric(vertical: 10),
                     ),
                   ),
                 ),
-                if (widget.records.length > 1) const Divider(height: 16, color: widget.c.border),
+                if (widget.records.length > 1) const Divider(height: 16, color: _kBorder),
               ],
             ]),
           ),
@@ -786,7 +717,7 @@ class _DetailRow extends StatelessWidget {
   Widget build(BuildContext context) => Padding(
     padding: const EdgeInsets.symmetric(vertical: 4),
     child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-      Text(label, style: const TextStyle(color: c.subtext, fontSize: 12)),
+      Text(label, style: const TextStyle(color: _kSubtext, fontSize: 12)),
       Text(value, style: TextStyle(color: color, fontSize: 12, fontWeight: FontWeight.w600)),
     ]),
   );
@@ -803,7 +734,7 @@ class _CarryoverOrAddBtn extends StatelessWidget {
     if (carryover != null && carryover! > 0.005) {
       return Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
         Text(fmt.format(carryover!)),
-        const Text('Last Week', style: TextStyle(color: Colors.grey, fontSize: 10, fontWeight: FontWeight.w600)),
+        const Text('Prev Week', style: TextStyle(color: _kSubtext, fontSize: 10)),
       ]);
     }
     return _AddBtn(onTap: onTap);
@@ -812,24 +743,22 @@ class _CarryoverOrAddBtn extends StatelessWidget {
 
 class _AddBtn extends StatelessWidget {
   final VoidCallback onTap;
-  final _ThemeColors c;
-  const _AddBtn({required this.onTap, required this.c});
+  const _AddBtn({required this.onTap});
   @override
   Widget build(BuildContext context) => GestureDetector(
     onTap: onTap,
     child: Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
-        color: c.primary.withValues(alpha: 0.12),
+        color: _kPrimary.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: c.primary.withValues(alpha: 0.3)),
+        border: Border.all(color: _kPrimary.withValues(alpha: 0.3)),
       ),
       child: const Row(mainAxisSize: MainAxisSize.min, children: [
-        Icon(Icons.add_rounded, color: c.primary, size: 14),
+        Icon(Icons.add_rounded, color: _kPrimary, size: 14),
         SizedBox(width: 4),
-        Text('Add', style: TextStyle(color: c.primary, fontSize: 12, fontWeight: FontWeight.w600)),
+        Text('Add', style: TextStyle(color: _kPrimary, fontSize: 12, fontWeight: FontWeight.w600)),
       ]),
     ),
   );
 }
-

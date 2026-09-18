@@ -12,7 +12,6 @@ import '../models/collection_cycle.dart';
 import '../providers/app_providers.dart';
 import '../services/supabase_service.dart';
 import '../services/collection_calculation_service.dart';
-import '../theme/app_tokens.dart';
 import '../widgets/index.dart';
 import '../widgets/app_drawer.dart';
 
@@ -136,9 +135,9 @@ class _DailyTrackingScreenState extends ConsumerState<DailyTrackingScreen> {
               Container(
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
-                  color: context.tokens.card,
+                  color: Colors.white,
                   borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: context.tokens.border),
+                  border: Border.all(color: const Color(0xFFE0E0E0)),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -261,26 +260,26 @@ class _DailyTrackingScreenState extends ConsumerState<DailyTrackingScreen> {
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
                       colors: [
-                        context.tokens.info.withValues(alpha: 0.10),
-                        context.tokens.info.withValues(alpha: 0.03),
+                        Colors.purple.shade50,
+                        Colors.purple.shade50.withOpacity(0.5),
                       ],
                     ),
                     borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: context.tokens.info.withValues(alpha: 0.25)),
+                    border: Border.all(color: Colors.purple.shade200),
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       Row(
                         children: [
-                          Icon(Icons.info_rounded, color: context.tokens.info, size: 20),
+                          Icon(Icons.info_rounded, color: Colors.purple.shade700, size: 20),
                           const SizedBox(width: 10),
                           Text(
                             'Collection Context',
                             style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.w600,
-                              color: context.tokens.info,
+                              color: Colors.purple.shade700,
                             ),
                           ),
                         ],
@@ -308,23 +307,23 @@ class _DailyTrackingScreenState extends ConsumerState<DailyTrackingScreen> {
                                 return Card(
                                   margin: const EdgeInsets.only(bottom: 12),
                                   elevation: 0,
-                                  color: context.tokens.card,
+                                  color: Colors.white,
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(12),
-                                    side: BorderSide(color: context.tokens.border, width: 0.5),
+                                    side: BorderSide(color: const Color(0xFFE0E0E0), width: 0.5),
                                   ),
                                   child: ListTile(
                                     contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                                     title: Text(
                                       dateStr,
-                                      style: TextStyle(fontWeight: FontWeight.w600, color: context.tokens.foreground),
+                                      style: const TextStyle(fontWeight: FontWeight.w600),
                                     ),
                                     subtitle: Column(
                                       crossAxisAlignment: CrossAxisAlignment.start,
                                       children: [
-                                        Text('Expected: ₹${cycle.expectedAmount.toStringAsFixed(2)}', style: TextStyle(color: context.tokens.mutedForeground)),
-                                        Text('Collected: ₹${cycle.collectedAmount.toStringAsFixed(2)}', style: TextStyle(color: context.tokens.mutedForeground)),
-                                        Text('Pending: ₹${cycle.pendingAmount.toStringAsFixed(2)}', style: TextStyle(color: context.tokens.mutedForeground)),
+                                        Text('Expected: ₹${cycle.expectedAmount.toStringAsFixed(2)}'),
+                                        Text('Collected: ₹${cycle.collectedAmount.toStringAsFixed(2)}'),
+                                        Text('Pending: ₹${cycle.pendingAmount.toStringAsFixed(2)}'),
                                       ],
                                     ),
                                     trailing: Container(
@@ -349,7 +348,7 @@ class _DailyTrackingScreenState extends ConsumerState<DailyTrackingScreen> {
                             )
                           : Text(
                               'No collection history found for this bag',
-                              style: TextStyle(color: context.tokens.mutedForeground),
+                              style: TextStyle(color: Colors.grey.shade600),
                             ),
                     ],
                   ),

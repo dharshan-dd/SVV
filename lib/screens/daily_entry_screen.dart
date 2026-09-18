@@ -13,7 +13,6 @@ import '../models/daily_collection_entry.dart';
 import '../providers/app_providers.dart';
 import '../services/supabase_service.dart';
 import '../services/collection_calculation_service.dart';
-import '../theme/app_tokens.dart';
 import '../widgets/index.dart';
 import '../widgets/app_drawer.dart';
 
@@ -127,9 +126,9 @@ class _DailyEntryScreenState extends ConsumerState<DailyEntryScreen> {
                 Container(
                   padding: const EdgeInsets.all(20),
                   decoration: BoxDecoration(
-                    color: context.tokens.card,
+                    color: Colors.white,
                     borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: context.tokens.border),
+                    border: Border.all(color: const Color(0xFFE0E0E0)),
                   ),
                   child: DatePickerField(
                     label: 'Entry Date',
@@ -148,9 +147,9 @@ class _DailyEntryScreenState extends ConsumerState<DailyEntryScreen> {
                 Container(
                   padding: const EdgeInsets.all(20),
                   decoration: BoxDecoration(
-                    color: context.tokens.card,
+                    color: Colors.white,
                     borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: context.tokens.border),
+                    border: Border.all(color: const Color(0xFFE0E0E0)),
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -254,22 +253,22 @@ class _DailyEntryScreenState extends ConsumerState<DailyEntryScreen> {
                    Container(
                      padding: const EdgeInsets.all(16),
                      decoration: BoxDecoration(
-                       color: context.tokens.info.withValues(alpha: 0.08),
+                       color: Colors.purple.shade50,
                        borderRadius: BorderRadius.circular(16),
-                       border: Border.all(color: context.tokens.info.withValues(alpha: 0.25)),
+                       border: Border.all(color: Colors.purple.shade200),
                      ),
                      child: Column(
                        children: [
                          Row(
                            children: [
-                             Icon(Icons.calendar_today_rounded, color: context.tokens.info, size: 20),
+                             Icon(Icons.calendar_today_rounded, color: Colors.purple.shade700, size: 20),
                              const SizedBox(width: 10),
                              Text(
                                'Collection Cycle Info',
                                style: TextStyle(
                                  fontSize: 15,
                                  fontWeight: FontWeight.w600,
-                                 color: context.tokens.info,
+                                 color: Colors.purple.shade700,
                                ),
                              ),
                            ],
@@ -281,7 +280,7 @@ class _DailyEntryScreenState extends ConsumerState<DailyEntryScreen> {
                                child: _InfoTile(
                                  label: 'Expected',
                                  value: NumberFormat.currency(symbol: '₹', decimalDigits: 2).format(formState.expectedAmount),
-                                 color: context.tokens.info,
+                                 color: Colors.blue,
                                ),
                              ),
                              const SizedBox(width: 12),
@@ -289,7 +288,7 @@ class _DailyEntryScreenState extends ConsumerState<DailyEntryScreen> {
                                child: _InfoTile(
                                  label: 'Previous Pending',
                                  value: NumberFormat.currency(symbol: '₹', decimalDigits: 2).format(formState.previousPending),
-                                 color: formState.previousPending > 0 ? context.tokens.warning : Colors.grey,
+                                 color: formState.previousPending > 0 ? Colors.orange : Colors.grey,
                                ),
                              ),
                            ],
@@ -298,13 +297,13 @@ class _DailyEntryScreenState extends ConsumerState<DailyEntryScreen> {
                          Container(
                            padding: const EdgeInsets.all(12),
                            decoration: BoxDecoration(
-                             color: context.tokens.info.withValues(alpha: 0.15),
+                             color: Colors.purple.shade100,
                              borderRadius: BorderRadius.circular(12),
-                             border: Border.all(color: context.tokens.info.withValues(alpha: 0.35)),
+                             border: Border.all(color: Colors.purple.shade300),
                            ),
                            child: Row(
                              children: [
-                               Icon(Icons.calculate_rounded, color: context.tokens.info, size: 20),
+                               const Icon(Icons.calculate_rounded, color: Colors.purple, size: 20),
                                const SizedBox(width: 10),
                                Expanded(
                                  child: Column(
@@ -314,7 +313,7 @@ class _DailyEntryScreenState extends ConsumerState<DailyEntryScreen> {
                                        'Total Due',
                                        style: TextStyle(
                                          fontSize: 12,
-                                         color: context.tokens.info,
+                                         color: Colors.purple.shade700,
                                          fontWeight: FontWeight.w500,
                                        ),
                                      ),
@@ -323,7 +322,7 @@ class _DailyEntryScreenState extends ConsumerState<DailyEntryScreen> {
                                        style: TextStyle(
                                          fontSize: 18,
                                          fontWeight: FontWeight.bold,
-                                         color: context.tokens.info,
+                                         color: Colors.purple.shade800,
                                        ),
                                      ),
                                    ],
@@ -344,19 +343,19 @@ class _DailyEntryScreenState extends ConsumerState<DailyEntryScreen> {
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
                       colors: [
-                        context.tokens.success.withValues(alpha: 0.10),
-                        context.tokens.success.withValues(alpha: 0.03),
+                        Colors.green.shade50,
+                        Colors.green.shade50.withOpacity(0.5),
                       ],
                     ),
                     borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: context.tokens.success.withValues(alpha: 0.25)),
+                    border: Border.all(color: Colors.green.shade200),
                   ),
                   child: Column(
                     children: [
                       Container(
                         padding: const EdgeInsets.all(16),
                         decoration: BoxDecoration(
-                          color: context.tokens.success,
+                          color: Colors.green.shade600,
                           borderRadius: const BorderRadius.only(
                             topLeft: Radius.circular(15),
                             topRight: Radius.circular(15),
@@ -392,7 +391,7 @@ class _DailyEntryScreenState extends ConsumerState<DailyEntryScreen> {
                                     .setOpeningBalance(value);
                               },
                               prefixIcon: Icons.account_balance_wallet_rounded,
-                              color: context.tokens.success,
+                              color: Colors.green,
                             ),
                             NumericInputField(
                               label: 'Collection (Cash)',
@@ -404,7 +403,7 @@ class _DailyEntryScreenState extends ConsumerState<DailyEntryScreen> {
                                     .setCollectionCash(value);
                               },
                               prefixIcon: Icons.money_rounded,
-                              color: context.tokens.success,
+                              color: Colors.green,
                             ),
                             NumericInputField(
                               label: 'Collection (UPI)',
@@ -416,7 +415,7 @@ class _DailyEntryScreenState extends ConsumerState<DailyEntryScreen> {
                                     .setCollectionUpi(value);
                               },
                               prefixIcon: Icons.qr_code_rounded,
-                              color: context.tokens.success,
+                              color: Colors.green,
                             ),
                             NumericInputField(
                               label: 'Document Charges',
@@ -428,19 +427,19 @@ class _DailyEntryScreenState extends ConsumerState<DailyEntryScreen> {
                                     .setDocumentCharges(value);
                               },
                               prefixIcon: Icons.description_rounded,
-                              color: context.tokens.success,
+                              color: Colors.green,
                             ),
                             const SizedBox(height: 12),
                             Container(
                               padding: const EdgeInsets.all(14),
                               decoration: BoxDecoration(
-                                color: context.tokens.success.withValues(alpha: 0.15),
+                                color: Colors.green.shade100,
                                 borderRadius: BorderRadius.circular(12),
-                                border: Border.all(color: context.tokens.success.withValues(alpha: 0.35)),
+                                border: Border.all(color: Colors.green.shade300),
                               ),
                               child: Row(
                                 children: [
-                                  Icon(Icons.add_circle_rounded, color: context.tokens.success, size: 22),
+                                  const Icon(Icons.add_circle_rounded, color: Colors.green, size: 22),
                                   const SizedBox(width: 10),
                                   Expanded(
                                     child: Column(
@@ -450,7 +449,7 @@ class _DailyEntryScreenState extends ConsumerState<DailyEntryScreen> {
                                           'Total Credit',
                                           style: TextStyle(
                                             fontSize: 12,
-                                            color: context.tokens.success,
+                                            color: Colors.green.shade700,
                                             fontWeight: FontWeight.w500,
                                           ),
                                         ),
@@ -459,7 +458,7 @@ class _DailyEntryScreenState extends ConsumerState<DailyEntryScreen> {
                                           style: TextStyle(
                                             fontSize: 20,
                                             fontWeight: FontWeight.bold,
-                                            color: context.tokens.success,
+                                            color: Colors.green.shade800,
                                           ),
                                         ),
                                       ],
@@ -482,19 +481,19 @@ class _DailyEntryScreenState extends ConsumerState<DailyEntryScreen> {
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
                       colors: [
-                        context.tokens.warning.withValues(alpha: 0.10),
-                        context.tokens.warning.withValues(alpha: 0.03),
+                        Colors.orange.shade50,
+                        Colors.orange.shade50.withOpacity(0.5),
                       ],
                     ),
                     borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: context.tokens.warning.withValues(alpha: 0.25)),
+                    border: Border.all(color: Colors.orange.shade200),
                   ),
                   child: Column(
                     children: [
                       Container(
                         padding: const EdgeInsets.all(16),
                         decoration: BoxDecoration(
-                          color: context.tokens.warning,
+                          color: Colors.orange.shade600,
                           borderRadius: const BorderRadius.only(
                             topLeft: Radius.circular(15),
                             topRight: Radius.circular(15),
@@ -530,7 +529,7 @@ class _DailyEntryScreenState extends ConsumerState<DailyEntryScreen> {
                                     .setNewLoanCash(value);
                               },
                               prefixIcon: Icons.money_rounded,
-                              color: context.tokens.warning,
+                              color: Colors.orange,
                             ),
                             NumericInputField(
                               label: 'New Loan (UPI)',
@@ -542,7 +541,7 @@ class _DailyEntryScreenState extends ConsumerState<DailyEntryScreen> {
                                     .setNewLoanUpi(value);
                               },
                               prefixIcon: Icons.qr_code_rounded,
-                              color: context.tokens.warning,
+                              color: Colors.orange,
                             ),
                             NumericInputField(
                               label: 'Chit Payment',
@@ -554,7 +553,7 @@ class _DailyEntryScreenState extends ConsumerState<DailyEntryScreen> {
                                     .setChitPayment(value);
                               },
                               prefixIcon: Icons.payments_rounded,
-                              color: context.tokens.warning,
+                              color: Colors.orange,
                             ),
                             NumericInputField(
                               label: 'Misc Expenses',
@@ -566,19 +565,19 @@ class _DailyEntryScreenState extends ConsumerState<DailyEntryScreen> {
                                     .setMiscExpenses(value);
                               },
                               prefixIcon: Icons.miscellaneous_services_rounded,
-                              color: context.tokens.warning,
+                              color: Colors.orange,
                             ),
                             const SizedBox(height: 12),
                             Container(
                               padding: const EdgeInsets.all(14),
                               decoration: BoxDecoration(
-                                color: context.tokens.warning.withValues(alpha: 0.15),
+                                color: Colors.orange.shade100,
                                 borderRadius: BorderRadius.circular(12),
-                                border: Border.all(color: context.tokens.warning.withValues(alpha: 0.35)),
+                                border: Border.all(color: Colors.orange.shade300),
                               ),
                               child: Row(
                                 children: [
-                                  Icon(Icons.remove_circle_rounded, color: context.tokens.warning, size: 22),
+                                  const Icon(Icons.remove_circle_rounded, color: Colors.orange, size: 22),
                                   const SizedBox(width: 10),
                                   Expanded(
                                     child: Column(
@@ -588,7 +587,7 @@ class _DailyEntryScreenState extends ConsumerState<DailyEntryScreen> {
                                           'Total Debit',
                                           style: TextStyle(
                                             fontSize: 12,
-                                            color: context.tokens.warning,
+                                            color: Colors.orange.shade700,
                                             fontWeight: FontWeight.w500,
                                           ),
                                         ),
@@ -597,7 +596,7 @@ class _DailyEntryScreenState extends ConsumerState<DailyEntryScreen> {
                                           style: TextStyle(
                                             fontSize: 20,
                                             fontWeight: FontWeight.bold,
-                                            color: context.tokens.warning,
+                                            color: Colors.orange.shade800,
                                           ),
                                         ),
                                       ],
@@ -620,13 +619,13 @@ class _DailyEntryScreenState extends ConsumerState<DailyEntryScreen> {
                   padding: const EdgeInsets.all(20),
                   decoration: BoxDecoration(
                     color: formState.netClosingBalance >= 0
-                        ? context.tokens.info.withValues(alpha: 0.08)
-                        : context.tokens.danger.withValues(alpha: 0.08),
+                        ? Colors.blue.shade50
+                        : Colors.red.shade50,
                     borderRadius: BorderRadius.circular(16),
                     border: Border.all(
                       color: formState.netClosingBalance >= 0
-                          ? context.tokens.info.withValues(alpha: 0.35)
-                          : context.tokens.danger.withValues(alpha: 0.35),
+                          ? Colors.blue.shade300
+                          : Colors.red.shade300,
                       width: 1.5,
                     ),
                   ),
@@ -635,7 +634,7 @@ class _DailyEntryScreenState extends ConsumerState<DailyEntryScreen> {
                       Container(
                         padding: const EdgeInsets.all(10),
                         decoration: BoxDecoration(
-                          color: (formState.netClosingBalance >= 0 ? context.tokens.info : context.tokens.danger).withOpacity(0.1),
+                          color: (formState.netClosingBalance >= 0 ? Colors.blue : Colors.red).withOpacity(0.1),
                           borderRadius: BorderRadius.circular(10),
                         ),
                         child: Icon(
@@ -644,8 +643,8 @@ class _DailyEntryScreenState extends ConsumerState<DailyEntryScreen> {
                               : Icons.trending_down_rounded,
                           size: 28,
                           color: formState.netClosingBalance >= 0
-                              ? context.tokens.info
-                              : context.tokens.danger,
+                              ? Colors.blue.shade700
+                              : Colors.red.shade700,
                         ),
                       ),
                       const SizedBox(width: 16),
@@ -671,8 +670,8 @@ class _DailyEntryScreenState extends ConsumerState<DailyEntryScreen> {
                                 fontSize: 26,
                                 fontWeight: FontWeight.bold,
                                 color: formState.netClosingBalance >= 0
-                                    ? context.tokens.info
-                                    : context.tokens.danger,
+                                    ? Colors.blue.shade800
+                                    : Colors.red.shade800,
                               ),
                             ),
                           ],
@@ -689,7 +688,7 @@ class _DailyEntryScreenState extends ConsumerState<DailyEntryScreen> {
                   Container(
                     height: 50,
                     decoration: BoxDecoration(
-                      color: context.tokens.success,
+                      color: const Color(0xFF1B5E20),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: const Center(
@@ -709,18 +708,18 @@ class _DailyEntryScreenState extends ConsumerState<DailyEntryScreen> {
                     child: Container(
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: context.tokens.danger.withValues(alpha: 0.08),
+                        color: Colors.red.shade50,
                         borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: context.tokens.danger.withValues(alpha: 0.25)),
+                        border: Border.all(color: Colors.red.shade200),
                       ),
                       child: Row(
                         children: [
-                          Icon(Icons.error_outline_rounded, color: context.tokens.danger, size: 18),
+                          Icon(Icons.error_outline_rounded, color: Colors.red.shade700, size: 18),
                           const SizedBox(width: 8),
                           Expanded(
                             child: Text(
                               formStatus.error!,
-                              style: TextStyle(color: context.tokens.danger, fontSize: 13),
+                              style: TextStyle(color: Colors.red.shade700, fontSize: 13),
                             ),
                           ),
                         ],
@@ -776,7 +775,7 @@ class _DailyEntryScreenState extends ConsumerState<DailyEntryScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: const Text('Entry submitted successfully!'),
-          backgroundColor: context.tokens.success,
+          backgroundColor: Colors.green.shade700,
           behavior: SnackBarBehavior.floating,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
         ),

@@ -6,13 +6,19 @@ import 'package:microfinance_app/models/daily_cash_record.dart';
 import 'package:microfinance_app/providers/app_providers.dart';
 import 'package:microfinance_app/services/supabase_service.dart';
 import 'package:microfinance_app/services/collection_calculation_service.dart';
-import 'package:microfinance_app/theme/app_tokens.dart';
 import 'package:microfinance_app/widgets/app_drawer.dart';
 
-// Colours come from `context.tokens` so this screen follows the active
-// theme. Orange has no semantic token; kept fixed since it reads fine on
-// every theme's card background.
-const _kOrange = Color(0xFFF97316);
+const _kBg      = Color(0xFF0A0E1A);
+const _kSurface = Color(0xFF111827);
+const _kCard    = Color(0xFF1C2333);
+const _kBorder  = Color(0xFF2A3347);
+const _kPrimary = Color(0xFF3B82F6);
+const _kGold    = Color(0xFFF59E0B);
+const _kGreen   = Color(0xFF10B981);
+const _kRed     = Color(0xFFEF4444);
+const _kOrange  = Color(0xFFF97316);
+const _kText    = Color(0xFFF1F5F9);
+const _kSubtext = Color(0xFF94A3B8);
 
 class PlanNoteScreen extends ConsumerStatefulWidget {
   const PlanNoteScreen({super.key});
@@ -74,25 +80,25 @@ class _PlanNoteScreenState extends ConsumerState<PlanNoteScreen>
       child: bagsAsync.when(
         data: (bags) => DropdownButtonFormField<String>(
           value: _selectedBagId,
-          dropdownColor: context.tokens.card,
+          dropdownColor: _kCard,
           decoration: InputDecoration(
             labelText: 'Filter by Bag',
-            labelStyle: TextStyle(color: context.tokens.mutedForeground),
+            labelStyle: const TextStyle(color: _kSubtext),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: context.tokens.border),
+              borderSide: const BorderSide(color: _kBorder),
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: context.tokens.border),
+              borderSide: const BorderSide(color: _kBorder),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: context.tokens.info, width: 2),
+              borderSide: const BorderSide(color: _kPrimary, width: 2),
             ),
             contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
           ),
-          style: TextStyle(color: context.tokens.foreground),
+          style: const TextStyle(color: _kText),
           items: [
             const DropdownMenuItem(value: null, child: Text('All Bags')),
             ...bags.map((b) => DropdownMenuItem(value: b.id, child: Text(b.name))),
@@ -134,20 +140,20 @@ class _PlanNoteScreenState extends ConsumerState<PlanNoteScreen>
     final grouped = _groupByBranchAndBag();
 
     return Scaffold(
-      backgroundColor: context.tokens.background,
+      backgroundColor: _kBg,
       drawer: const AppDrawer(),
       body: FadeTransition(
         opacity: _fadeAnim,
         child: CustomScrollView(slivers: [
           SliverAppBar(
             pinned: true,
-            backgroundColor: context.tokens.surface,
-            foregroundColor: context.tokens.foreground,
+            backgroundColor: _kSurface,
+            foregroundColor: _kText,
             elevation: 0,
-            title: Text('Plan Notes', style: TextStyle(color: context.tokens.foreground, fontWeight: FontWeight.w700, fontSize: 18)),
+            title: const Text('Plan Notes', style: TextStyle(color: _kText, fontWeight: FontWeight.w700, fontSize: 18)),
             actions: [
               IconButton(
-                icon: Icon(Icons.refresh_rounded, color: context.tokens.mutedForeground),
+                icon: const Icon(Icons.refresh_rounded, color: _kSubtext),
                 onPressed: _load,
               ),
             ],
@@ -165,23 +171,23 @@ class _PlanNoteScreenState extends ConsumerState<PlanNoteScreen>
                         lastDate: DateTime(2030),
                         builder: (ctx, child) => Theme(
                           data: Theme.of(ctx).copyWith(
-                            colorScheme: ColorScheme.light(primary: context.tokens.info),
-                            dialogBackgroundColor: context.tokens.surface,
+                            colorScheme: const ColorScheme.light(primary: _kPrimary),
+                            dialogBackgroundColor: _kSurface,
                           ),
                           child: child!,
                         ),
                       );
                       if (picked != null) _changeDate(picked);
                     },
-                  icon: Icon(Icons.calendar_today_rounded, color: context.tokens.info, size: 18),
+                  icon: const Icon(Icons.calendar_today_rounded, color: _kPrimary, size: 18),
                   label: Text(
                     _selectedBagId != null
                       ? 'All dates (bag filter active)'
                       : DateFormat('EEE, d MMMM yyyy').format(_selectedDate),
-                      style: TextStyle(color: context.tokens.foreground, fontWeight: FontWeight.w600, fontSize: 13),
+                      style: const TextStyle(color: _kText, fontWeight: FontWeight.w600, fontSize: 13),
                     ),
                     style: OutlinedButton.styleFrom(
-                      side: BorderSide(color: context.tokens.border),
+                      side: const BorderSide(color: _kBorder),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                       padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 14),
                     ),
@@ -208,19 +214,19 @@ class _PlanNoteScreenState extends ConsumerState<PlanNoteScreen>
     padding: const EdgeInsets.all(16),
     child: Column(children: List.generate(3, (_) => Padding(
       padding: const EdgeInsets.only(bottom: 12),
-      child: Container(height: 120, decoration: BoxDecoration(color: context.tokens.card, borderRadius: BorderRadius.circular(14))),
+      child: Container(height: 120, decoration: BoxDecoration(color: _kCard, borderRadius: BorderRadius.circular(14))),
     ))),
   );
 
   Widget _buildEmpty() => Padding(
     padding: const EdgeInsets.all(32),
     child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-      Icon(Icons.note_rounded, size: 64, color: context.tokens.mutedForeground),
+      Icon(Icons.note_rounded, size: 64, color: Colors.grey.shade300),
       const SizedBox(height: 16),
       Text(_selectedBagId != null
           ? 'No records found for this bag'
           : 'No records for ${DateFormat('d MMMM yyyy').format(_selectedDate)}',
-        style: TextStyle(color: context.tokens.mutedForeground)),
+        style: TextStyle(color: Colors.grey.shade600)),
     ]),
   );
 
@@ -261,33 +267,33 @@ class _PlanNoteScreenState extends ConsumerState<PlanNoteScreen>
       Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         decoration: BoxDecoration(
-          color: isBagMode ? context.tokens.accent.withValues(alpha: 0.08) : context.tokens.info.withValues(alpha: 0.08),
+          color: isBagMode ? _kGold.withValues(alpha: 0.08) : _kPrimary.withValues(alpha: 0.08),
           borderRadius: BorderRadius.vertical(top: Radius.circular(isBagMode ? 14 : 0)),
-          border: Border.all(color: (isBagMode ? context.tokens.accent : context.tokens.info).withValues(alpha: 0.2)),
+          border: Border.all(color: (isBagMode ? _kGold : _kPrimary).withValues(alpha: 0.2)),
         ),
         child: Row(children: [
-          Icon(isBagMode ? Icons.work_rounded : Icons.location_city_rounded, color: isBagMode ? context.tokens.accent : context.tokens.info, size: 18),
+          Icon(isBagMode ? Icons.work_rounded : Icons.location_city_rounded, color: isBagMode ? _kGold : _kPrimary, size: 18),
           const SizedBox(width: 8),
           Expanded(child: Text(
             title,
-            style: TextStyle(color: context.tokens.foreground, fontWeight: FontWeight.w700, fontSize: 15),
+            style: TextStyle(color: _kText, fontWeight: FontWeight.w700, fontSize: 15),
           )),
           Text(fmt.format(totalFinal),
-            style: TextStyle(color: totalFinal >= 0 ? context.tokens.success : context.tokens.danger, fontWeight: FontWeight.w800, fontSize: 14)),
+            style: TextStyle(color: totalFinal >= 0 ? _kGreen : _kRed, fontWeight: FontWeight.w800, fontSize: 14)),
         ]),
       ),
       Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         decoration: BoxDecoration(
-          color: context.tokens.card,
+          color: _kCard,
           borderRadius: BorderRadius.vertical(bottom: isBagMode ? Radius.circular(14) : Radius.zero),
-          border: Border.all(color: context.tokens.border),
+          border: Border.all(color: _kBorder),
         ),
         child: Wrap(spacing: 16, runSpacing: 8, children: [
-          _miniStat('Collected', fmt.format(totalCollected - totalAdditionalCollection), context.tokens.success),
+          _miniStat('Collected', fmt.format(totalCollected - totalAdditionalCollection), _kGreen),
           if (totalAdditionalCollection > 0)
-            _miniStat('+ Additional', fmt.format(totalAdditionalCollection), context.tokens.accent),
-          _miniStat('Expenses', fmt.format(totalExpense), context.tokens.danger),
+            _miniStat('+ Additional', fmt.format(totalAdditionalCollection), _kGold),
+          _miniStat('Expenses', fmt.format(totalExpense), _kRed),
           _miniStat('Amount Given', fmt.format(totalGiven), _kOrange),
         ]),
       ),
@@ -321,19 +327,19 @@ class _PlanNoteScreenState extends ConsumerState<PlanNoteScreen>
       Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
         decoration: BoxDecoration(
-          color: context.tokens.surface,
+          color: _kSurface,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: context.tokens.border),
+          border: Border.all(color: _kBorder),
         ),
         child: Row(children: [
-          Icon(Icons.work_rounded, color: context.tokens.accent, size: 16),
+          const Icon(Icons.work_rounded, color: _kGold, size: 16),
           const SizedBox(width: 6),
           Expanded(child: Text(
             '$bagName (${records.length})',
-            style: TextStyle(color: context.tokens.foreground, fontWeight: FontWeight.w600, fontSize: 13),
+            style: const TextStyle(color: _kText, fontWeight: FontWeight.w600, fontSize: 13),
           )),
           Text(fmt.format(bagFinal),
-            style: TextStyle(color: bagFinal >= 0 ? context.tokens.success : context.tokens.danger, fontWeight: FontWeight.w800, fontSize: 13)),
+            style: TextStyle(color: bagFinal >= 0 ? _kGreen : _kRed, fontWeight: FontWeight.w800, fontSize: 13)),
         ]),
       ),
       const SizedBox(height: 8),
@@ -373,22 +379,22 @@ class _PlanNoteScreenState extends ConsumerState<PlanNoteScreen>
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
-        color: context.tokens.info.withValues(alpha: 0.06),
+        color: _kPrimary.withValues(alpha: 0.06),
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: context.tokens.info.withValues(alpha: 0.15)),
+        border: Border.all(color: _kPrimary.withValues(alpha: 0.15)),
       ),
       child: Row(children: [
-        Icon(Icons.date_range_rounded, color: context.tokens.info, size: 14),
+        const Icon(Icons.date_range_rounded, color: _kPrimary, size: 14),
         const SizedBox(width: 6),
-        Text(label, style: TextStyle(color: context.tokens.foreground, fontSize: 12, fontWeight: FontWeight.w600)),
+        Text(label, style: const TextStyle(color: _kText, fontSize: 12, fontWeight: FontWeight.w600)),
         const SizedBox(width: 8),
-        Text(fmt.format(weekTotal), style: TextStyle(color: weekTotal >= 0 ? context.tokens.success : context.tokens.danger, fontSize: 12, fontWeight: FontWeight.w700)),
+        Text(fmt.format(weekTotal), style: TextStyle(color: weekTotal >= 0 ? _kGreen : _kRed, fontSize: 12, fontWeight: FontWeight.w700)),
       ]),
     );
   }
 
   Widget _miniStat(String label, String value, Color color) => Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-    Text(label, style: TextStyle(color: context.tokens.mutedForeground, fontSize: 10)),
+    Text(label, style: TextStyle(color: _kSubtext, fontSize: 10)),
     Text(value, style: TextStyle(color: color, fontSize: 13, fontWeight: FontWeight.w700)),
   ]);
 }
@@ -412,11 +418,11 @@ class _RecordDetail extends StatelessWidget {
     );
 
     final isPos = (calc['finalAmount'] as double) >= 0;
-    final color = isPos ? context.tokens.success : context.tokens.danger;
+    final color = isPos ? _kGreen : _kRed;
 
     return Container(
       decoration: BoxDecoration(
-        color: context.tokens.card,
+        color: _kCard,
         borderRadius: BorderRadius.circular(14),
         border: Border.all(color: color.withValues(alpha: 0.3)),
       ),
@@ -424,7 +430,7 @@ class _RecordDetail extends StatelessWidget {
         Container(
           padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(
-            color: context.tokens.info.withValues(alpha: 0.06),
+            color: _kPrimary.withValues(alpha: 0.06),
             borderRadius: BorderRadius.vertical(top: Radius.circular(14)),
           ),
           child: Row(children: [
@@ -440,15 +446,15 @@ class _RecordDetail extends StatelessWidget {
             Expanded(
               child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                 Text('Bag: ${record.bagId.substring(0, 8)}...',
-                  style: TextStyle(color: context.tokens.mutedForeground, fontSize: 11, fontWeight: FontWeight.w600)),
+                  style: TextStyle(color: _kSubtext, fontSize: 11, fontWeight: FontWeight.w600)),
                 Text(DateFormat('EEE, d MMM yyyy').format(record.entryDate),
-                  style: TextStyle(color: context.tokens.foreground, fontSize: 13, fontWeight: FontWeight.w600)),
+                  style: TextStyle(color: _kText, fontSize: 13, fontWeight: FontWeight.w600)),
               ]),
             ),
              Text(fmt.format(calc['finalAmount']),
               style: TextStyle(color: color, fontSize: 16, fontWeight: FontWeight.w800)),
             IconButton(
-              icon: Icon(Icons.edit_rounded, color: context.tokens.mutedForeground, size: 18),
+              icon: const Icon(Icons.edit_rounded, color: _kSubtext, size: 18),
               onPressed: () {
                 final dateStr = DateFormat('yyyy-MM-dd').format(record.entryDate);
                 context.go('/day-record-entry?date=$dateStr&regionId=${record.regionId}&modelId=${record.modelId}&bagId=${record.bagId}');
@@ -459,47 +465,47 @@ class _RecordDetail extends StatelessWidget {
         Padding(
           padding: const EdgeInsets.all(14),
           child: Column(children: [
-            _calcRow(context, 'Previous Final', fmt.format(calc['previousFinalAmount']), context.tokens.accent),
-            _calcRow(context, 'Net in Hand', fmt.format(calc['netAmountInHand']), context.tokens.foreground),
-            _calcRow(context, 'Collected', fmt.format(record.collectedAmount - record.additionalCollection), context.tokens.success),
+            _calcRow('Previous Final', fmt.format(calc['previousFinalAmount']), _kGold),
+            _calcRow('Net in Hand', fmt.format(calc['netAmountInHand']), _kText),
+            _calcRow('Collected', fmt.format(record.collectedAmount - record.additionalCollection), _kGreen),
             if (record.additionalCollection > 0)
-              _calcRow(context, '+ Additional Collection', fmt.format(record.additionalCollection), context.tokens.accent),
-            _calcRow(context, 'Amount Given', fmt.format(calc['adapAmount']), _kOrange),
-            _calcRow(context, 'Remaining', fmt.format(calc['remainingAmount']), context.tokens.info),
-            _calcRow(context, 'Document Fees', fmt.format(calc['documentFees']), context.tokens.foreground),
-            _divider(context),
-            _calcTotal(context, 'Total Amount', fmt.format(calc['totalAmount']), context.tokens.foreground),
-            _calcTotal(context, 'After ADAP', fmt.format(calc['amountAfterAdap']), _kOrange),
-            _calcTotal(context, 'After GPay', fmt.format(calc['amountAfterGpay']), context.tokens.info),
-            _divider(context),
-            _calcRow(context, '- RR GPay', '- ${fmt.format(calc['rrGpayAmount'])}', context.tokens.danger),
-            _calcRow(context, '- Expense', '- ${fmt.format(calc['expense'])}', context.tokens.danger),
-            _divider(context),
-            _calcTotal(context, 'Final Amount', fmt.format(calc['finalAmount']), isPos ? context.tokens.success : context.tokens.danger),
+              _calcRow('+ Additional Collection', fmt.format(record.additionalCollection), _kGold),
+            _calcRow('Amount Given', fmt.format(calc['adapAmount']), _kOrange),
+            _calcRow('Remaining', fmt.format(calc['remainingAmount']), _kPrimary),
+            _calcRow('Document Fees', fmt.format(calc['documentFees']), _kText),
+            _divider(),
+            _calcTotal('Total Amount', fmt.format(calc['totalAmount']), _kText),
+            _calcTotal('After ADAP', fmt.format(calc['amountAfterAdap']), _kOrange),
+            _calcTotal('After GPay', fmt.format(calc['amountAfterGpay']), _kPrimary),
+            _divider(),
+            _calcRow('- RR GPay', '- ${fmt.format(calc['rrGpayAmount'])}', _kRed),
+            _calcRow('- Expense', '- ${fmt.format(calc['expense'])}', _kRed),
+            _divider(),
+            _calcTotal('Final Amount', fmt.format(calc['finalAmount']), isPos ? _kGreen : _kRed),
           ]),
         ),
       ]),
     );
   }
 
-  Widget _calcRow(BuildContext context, String label, String value, Color color) => Padding(
+  Widget _calcRow(String label, String value, Color color) => Padding(
     padding: const EdgeInsets.symmetric(vertical: 3),
     child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-      Text(label, style: TextStyle(color: context.tokens.mutedForeground, fontSize: 12)),
+      Text(label, style: TextStyle(color: _kSubtext, fontSize: 12)),
       Text(value, style: TextStyle(color: color, fontSize: 12, fontWeight: FontWeight.w600)),
     ]),
   );
 
-  Widget _calcTotal(BuildContext context, String label, String value, Color color) => Padding(
+  Widget _calcTotal(String label, String value, Color color) => Padding(
     padding: const EdgeInsets.symmetric(vertical: 3),
     child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-      Text(label, style: TextStyle(color: context.tokens.mutedForeground, fontSize: 11, fontWeight: FontWeight.w600)),
+      Text(label, style: TextStyle(color: _kSubtext, fontSize: 11, fontWeight: FontWeight.w600)),
       Text(value, style: TextStyle(color: color, fontSize: 13, fontWeight: FontWeight.w800)),
     ]),
   );
 
-  Widget _divider(BuildContext context) => Padding(
-    padding: const EdgeInsets.symmetric(vertical: 5),
-    child: Divider(height: 1, color: context.tokens.border),
+  Widget _divider() => const Padding(
+    padding: EdgeInsets.symmetric(vertical: 5),
+    child: Divider(height: 1, color: _kBorder),
   );
 }

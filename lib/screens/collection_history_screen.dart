@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import '../providers/app_providers.dart';
 import '../services/supabase_service.dart';
-import '../theme/app_tokens.dart';
 import '../widgets/app_drawer.dart';
 
 class CollectionHistoryScreen extends ConsumerStatefulWidget {
@@ -136,11 +135,11 @@ class _CollectionHistoryScreenState extends ConsumerState<CollectionHistoryScree
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(Icons.history_rounded, size: 64, color: context.tokens.mutedForeground),
+                        Icon(Icons.history_rounded, size: 64, color: Colors.grey.shade300),
                         const SizedBox(height: 16),
                         Text(
                           'No collection history found',
-                          style: TextStyle(fontSize: 16, color: context.tokens.mutedForeground),
+                          style: TextStyle(fontSize: 16, color: Colors.grey.shade600),
                         ),
                       ],
                     ),
@@ -179,32 +178,32 @@ class _CollectionHistoryScreenState extends ConsumerState<CollectionHistoryScree
                     return Card(
                       margin: const EdgeInsets.only(bottom: 12),
                       elevation: 0,
-                      color: context.tokens.card,
+                      color: Colors.white,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
-                        side: BorderSide(color: context.tokens.border, width: 0.5),
+                        side: BorderSide(color: const Color(0xFFE0E0E0), width: 0.5),
                       ),
                       child: ListTile(
                         contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                         title: Text(
                           DateFormat('dd MMM yyyy').format(scheduledDate),
-                          style: TextStyle(fontWeight: FontWeight.w600, color: context.tokens.foreground),
+                          style: const TextStyle(fontWeight: FontWeight.w600),
                         ),
                         subtitle: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
                               bagConfig != null ? 'Bag: ${bagConfig['bag_id'] ?? ''}' : 'Bag: ${item['bag_id']}',
-                              style: TextStyle(fontSize: 12, color: context.tokens.mutedForeground),
+                              style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
                             ),
                             const SizedBox(height: 4),
                             Row(
                               children: [
-                                Text('Expected: ₹${expectedAmount.toStringAsFixed(2)}', style: TextStyle(color: context.tokens.foreground)),
+                                Text('Expected: ₹${expectedAmount.toStringAsFixed(2)}'),
                                 const SizedBox(width: 16),
-                                Text('Collected: ₹${collectedAmount.toStringAsFixed(2)}', style: TextStyle(color: context.tokens.foreground)),
+                                Text('Collected: ₹${collectedAmount.toStringAsFixed(2)}'),
                                 const SizedBox(width: 16),
-                                Text('Pending: ₹${pendingAmount.toStringAsFixed(2)}', style: TextStyle(color: context.tokens.foreground)),
+                                Text('Pending: ₹${pendingAmount.toStringAsFixed(2)}'),
                               ],
                             ),
                           ],

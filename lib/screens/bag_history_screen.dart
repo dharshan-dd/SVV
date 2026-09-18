@@ -5,7 +5,6 @@ import 'package:microfinance_app/models/collection_bag.dart';
 import 'package:microfinance_app/models/collection_cycle.dart';
 import 'package:microfinance_app/providers/app_providers.dart';
 import 'package:microfinance_app/services/collection_calculation_service.dart';
-import 'package:microfinance_app/theme/app_tokens.dart';
 import 'package:microfinance_app/widgets/app_drawer.dart';
 
 class BagHistoryScreen extends ConsumerStatefulWidget {
@@ -126,11 +125,11 @@ class _BagHistoryScreenState extends ConsumerState<BagHistoryScreen> {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(Icons.history_rounded, size: 64, color: context.tokens.mutedForeground),
+                        Icon(Icons.history_rounded, size: 64, color: Colors.grey.shade300),
                         const SizedBox(height: 16),
                         Text(
                           'No bag history found',
-                          style: TextStyle(fontSize: 16, color: context.tokens.mutedForeground),
+                          style: TextStyle(fontSize: 16, color: Colors.grey.shade600),
                         ),
                       ],
                     ),
@@ -150,9 +149,9 @@ class _BagHistoryScreenState extends ConsumerState<BagHistoryScreen> {
                         margin: const EdgeInsets.all(16),
                         padding: const EdgeInsets.all(16),
                         decoration: BoxDecoration(
-                          color: context.tokens.info.withValues(alpha: 0.08),
+                          color: Colors.blue.shade50,
                           borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: context.tokens.info.withValues(alpha: 0.25)),
+                          border: Border.all(color: Colors.blue.shade200),
                         ),
                         child: Column(
                           children: [
@@ -220,23 +219,23 @@ class _BagHistoryScreenState extends ConsumerState<BagHistoryScreen> {
                           return Card(
                             margin: const EdgeInsets.only(bottom: 12),
                             elevation: 0,
-                            color: context.tokens.card,
+                            color: Colors.white,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12),
-                              side: BorderSide(color: context.tokens.border, width: 0.5),
+                              side: BorderSide(color: const Color(0xFFE0E0E0), width: 0.5),
                             ),
                             child: ListTile(
                               contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                               title: Text(
                                 dateStr,
-                                style: TextStyle(fontWeight: FontWeight.w600, color: context.tokens.foreground),
+                                style: const TextStyle(fontWeight: FontWeight.w600),
                               ),
                               subtitle: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Text('Expected: ₹${cycle.expectedAmount.toStringAsFixed(2)}', style: TextStyle(color: context.tokens.mutedForeground)),
-                                  Text('Collected: ₹${cycle.collectedAmount.toStringAsFixed(2)}', style: TextStyle(color: context.tokens.mutedForeground)),
-                                  Text('Pending: ₹${cycle.pendingAmount.toStringAsFixed(2)}', style: TextStyle(color: context.tokens.mutedForeground)),
+                                  Text('Expected: ₹${cycle.expectedAmount.toStringAsFixed(2)}'),
+                                  Text('Collected: ₹${cycle.collectedAmount.toStringAsFixed(2)}'),
+                                  Text('Pending: ₹${cycle.pendingAmount.toStringAsFixed(2)}'),
                                 ],
                               ),
                               trailing: Container(
@@ -282,14 +281,13 @@ class _SummaryTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final t = context.tokens;
     return Container(
       padding: const EdgeInsets.all(12),
       margin: const EdgeInsets.only(right: 8),
       decoration: BoxDecoration(
-        color: t.card,
+        color: Colors.white,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: t.border),
+        border: Border.all(color: const Color(0xFFE0E0E0)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -298,17 +296,16 @@ class _SummaryTile extends StatelessWidget {
             label,
             style: TextStyle(
               fontSize: 12,
-              color: t.mutedForeground,
+              color: Colors.grey.shade600,
               fontWeight: FontWeight.w500,
             ),
           ),
           const SizedBox(height: 4),
           Text(
             value,
-            style: TextStyle(
+            style: const TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.bold,
-              color: t.foreground,
             ),
           ),
         ],

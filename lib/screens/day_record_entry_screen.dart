@@ -5,9 +5,14 @@ import 'package:intl/intl.dart';
 import 'package:microfinance_app/models/daily_cash_record.dart';
 import 'package:microfinance_app/providers/app_providers.dart';
 import 'package:microfinance_app/services/collection_calculation_service.dart';
-import 'package:microfinance_app/theme/app_tokens.dart';
 import 'package:microfinance_app/widgets/app_drawer.dart';
 
+const _kPrimary = Color(0xFF1A237E);
+const _kAccent = Color(0xFF3949AB);
+const _kGold = Color(0xFFFFC107);
+const _kSurface = Color(0xFFF5F7FF);
+const _kGreen = Color(0xFF00897B);
+const _kRed = Color(0xFFE53935);
 const _kRadius = 16.0;
 
 class DayRecordEntryScreen extends ConsumerStatefulWidget {
@@ -228,7 +233,7 @@ class _DayRecordEntryScreenState extends ConsumerState<DayRecordEntryScreen>
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Select Region, Model, and Bag first', style: TextStyle(fontWeight: FontWeight.w600)),
-            backgroundColor: context.tokens.danger,
+            backgroundColor: _kRed,
             behavior: SnackBarBehavior.floating,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             margin: const EdgeInsets.all(16),
@@ -275,9 +280,6 @@ class _DayRecordEntryScreenState extends ConsumerState<DayRecordEntryScreen>
       final newOpening = await calc.getLatestFinalAmount(
         bagId: _selectedBagId!, onOrBeforeDate: _entryDate,
       );
-      // Any screen reading cached daily-cash-records (e.g. the GPay
-      // dashboard) must see this change immediately, not on next app start.
-      ref.invalidate(dailyCashRecordsProvider);
       if (!mounted) return;
       setState(() {
         _existingRecord = saved;
@@ -295,7 +297,7 @@ class _DayRecordEntryScreenState extends ConsumerState<DayRecordEntryScreen>
           Text(existing != null ? 'Record updated' : 'Record saved',
               style: const TextStyle(fontWeight: FontWeight.w600)),
         ]),
-        backgroundColor: context.tokens.success,
+        backgroundColor: _kGreen,
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         margin: const EdgeInsets.all(16),
@@ -308,7 +310,7 @@ class _DayRecordEntryScreenState extends ConsumerState<DayRecordEntryScreen>
             const SizedBox(width: 10),
             Expanded(child: Text('Error: $e')),
           ]),
-          backgroundColor: context.tokens.danger,
+          backgroundColor: _kRed,
           behavior: SnackBarBehavior.floating,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           margin: const EdgeInsets.all(16),
@@ -324,7 +326,7 @@ class _DayRecordEntryScreenState extends ConsumerState<DayRecordEntryScreen>
     final fmt = NumberFormat.simpleCurrency(locale: 'en_IN', decimalDigits: 2);
     final trail = _trail;
     return Scaffold(
-      backgroundColor: context.tokens.background,
+      backgroundColor: _kSurface,
       drawer: const AppDrawer(),
       body: CustomScrollView(slivers: [
         _buildAppBar(),
@@ -367,7 +369,7 @@ class _DayRecordEntryScreenState extends ConsumerState<DayRecordEntryScreen>
     return SliverAppBar(
       expandedHeight: 120,
       pinned: true,
-      backgroundColor: context.tokens.headerStart,
+      backgroundColor: _kPrimary,
       foregroundColor: Colors.white,
       flexibleSpace: FlexibleSpaceBar(
         titlePadding: const EdgeInsets.fromLTRB(56, 0, 16, 16),
@@ -378,8 +380,8 @@ class _DayRecordEntryScreenState extends ConsumerState<DayRecordEntryScreen>
               style: const TextStyle(fontSize: 11, color: Colors.white70)),
         ]),
         background: Container(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(colors: [context.tokens.headerStart, context.tokens.headerEnd], begin: Alignment.topLeft, end: Alignment.bottomRight),
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(colors: [_kPrimary, _kAccent], begin: Alignment.topLeft, end: Alignment.bottomRight),
           ),
           child: Align(
             alignment: Alignment.centerRight,
@@ -398,7 +400,7 @@ class _DayRecordEntryScreenState extends ConsumerState<DayRecordEntryScreen>
     final modelsAsync = ref.watch(modelsProvider);
     final bagsAsync = ref.watch(collectionBagsProvider);
     return _Card(child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-      _Label(icon: Icons.tune_rounded, text: 'Select Context', color: context.tokens.info),
+      const _Label(icon: Icons.tune_rounded, text: 'Select Context', color: _kAccent),
       const SizedBox(height: 16),
       InkWell(
         borderRadius: BorderRadius.circular(12),
@@ -407,7 +409,7 @@ class _DayRecordEntryScreenState extends ConsumerState<DayRecordEntryScreen>
             context: context, initialDate: _entryDate,
             firstDate: DateTime(2020), lastDate: DateTime(2100),
             builder: (ctx, child) => Theme(
-              data: Theme.of(ctx).copyWith(colorScheme: ColorScheme.light(primary: context.tokens.headerStart)),
+              data: Theme.of(ctx).copyWith(colorScheme: const ColorScheme.light(primary: _kPrimary)),
               child: child!,
             ),
           );
@@ -415,13 +417,13 @@ class _DayRecordEntryScreenState extends ConsumerState<DayRecordEntryScreen>
         },
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-          decoration: BoxDecoration(border: Border.all(color: context.tokens.border), borderRadius: BorderRadius.circular(12)),
+          decoration: BoxDecoration(border: Border.all(color: Colors.grey.shade300), borderRadius: BorderRadius.circular(12)),
           child: Row(children: [
-            Icon(Icons.calendar_today_rounded, size: 18, color: context.tokens.info),
+            const Icon(Icons.calendar_today_rounded, size: 18, color: _kAccent),
             const SizedBox(width: 10),
             Expanded(child: Text(DateFormat('EEEE, d MMMM yyyy').format(_entryDate),
                 style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500))),
-            Icon(Icons.arrow_drop_down_rounded, color: context.tokens.mutedForeground),
+            Icon(Icons.arrow_drop_down_rounded, color: Colors.grey.shade500),
           ]),
         ),
       ),
@@ -460,26 +462,26 @@ class _DayRecordEntryScreenState extends ConsumerState<DayRecordEntryScreen>
 
   Widget _openingCard(NumberFormat fmt) {
     return _Card(child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-      _Label(icon: Icons.account_balance_wallet_rounded, text: 'Opening Balance', color: context.tokens.success),
+      const _Label(icon: Icons.account_balance_wallet_rounded, text: 'Opening Balance', color: _kGreen),
       const SizedBox(height: 16),
       Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          gradient: LinearGradient(colors: [context.tokens.success.withValues(alpha: 0.08), context.tokens.success.withValues(alpha: 0.02)]),
+          gradient: LinearGradient(colors: [_kGreen.withValues(alpha: 0.08), _kGreen.withValues(alpha: 0.02)]),
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: context.tokens.success.withValues(alpha: 0.2)),
+          border: Border.all(color: _kGreen.withValues(alpha: 0.2)),
         ),
          child: Row(children: [
            Container(
              padding: const EdgeInsets.all(10),
-             decoration: BoxDecoration(color: context.tokens.success.withValues(alpha: 0.12), shape: BoxShape.circle),
-             child: Icon(Icons.arrow_forward_rounded, color: context.tokens.success, size: 20),
+             decoration: BoxDecoration(color: _kGreen.withValues(alpha: 0.12), shape: BoxShape.circle),
+             child: const Icon(Icons.arrow_forward_rounded, color: _kGreen, size: 20),
            ),
            const SizedBox(width: 14),
            Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
              const Text('Opening Balance', style: TextStyle(fontSize: 11, color: Colors.grey)),
              Text(fmt.format(_d(_netCtrl)),
-                 style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: context.tokens.success)),
+                 style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: _kGreen)),
              ]),
           ]),
         ),
@@ -490,7 +492,7 @@ class _DayRecordEntryScreenState extends ConsumerState<DayRecordEntryScreen>
     final final_ = (trail['finalAmount'] as double?) ?? 0.0;
     final total = (trail['totalAmount'] as double?) ?? 0.0;
     final isPos = final_ >= 0;
-    final color = isPos ? context.tokens.success : context.tokens.danger;
+    final color = isPos ? _kGreen : _kRed;
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
@@ -517,12 +519,12 @@ class _DayRecordEntryScreenState extends ConsumerState<DayRecordEntryScreen>
     final fmt = NumberFormat.simpleCurrency(locale: 'en_IN', decimalDigits: 2);
     return _Card(child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
       Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-        _Label(icon: Icons.add_circle_rounded, text: 'Collections', color: context.tokens.info),
+        const _Label(icon: Icons.add_circle_rounded, text: 'Collections', color: _kAccent),
         TextButton.icon(
           onPressed: _addExtraCollection,
           icon: const Icon(Icons.add_rounded, size: 16),
           label: const Text('Add', style: TextStyle(fontSize: 12)),
-          style: TextButton.styleFrom(foregroundColor: context.tokens.info, padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4)),
+          style: TextButton.styleFrom(foregroundColor: _kAccent, padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4)),
         ),
       ]),
       const SizedBox(height: 4),
@@ -551,13 +553,13 @@ class _DayRecordEntryScreenState extends ConsumerState<DayRecordEntryScreen>
           reasonCtrl: _extraCollections[i]['reason'] as TextEditingController,
           hint: 'Collection label',
           icon: Icons.payments_rounded,
-          color: context.tokens.info,
+          color: _kAccent,
           onRemove: () => _removeExtraCollection(i),
         ),
       ],
       if (_extraCollections.isNotEmpty) ...[
         const SizedBox(height: 8),
-        _ResultRow(label: 'Extra Collections Total', value: fmt.format(_extraCollectionTotal), color: context.tokens.info),
+        _ResultRow(label: 'Extra Collections Total', value: fmt.format(_extraCollectionTotal), color: _kAccent),
       ],
     ]));
   }
@@ -567,22 +569,22 @@ class _DayRecordEntryScreenState extends ConsumerState<DayRecordEntryScreen>
     final afterGpay = (trail['amountAfterGpay'] as double?) ?? 0.0;
     return _Card(child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
       Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-        _Label(icon: Icons.remove_circle_rounded, text: 'Deductions', color: context.tokens.danger),
+        const _Label(icon: Icons.remove_circle_rounded, text: 'Deductions', color: _kRed),
         TextButton.icon(
           onPressed: _addExtraExpense,
           icon: const Icon(Icons.add_rounded, size: 16),
           label: const Text('Add', style: TextStyle(fontSize: 12)),
-          style: TextButton.styleFrom(foregroundColor: context.tokens.danger, padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4)),
+          style: TextButton.styleFrom(foregroundColor: _kRed, padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4)),
         ),
       ]),
       const SizedBox(height: 4),
       _Field(ctrl: _adapCtrl, label: 'ADAP Amount', icon: Icons.swap_horiz_rounded),
       const SizedBox(height: 6),
-      _ResultRow(label: 'After ADAP', value: fmt.format(afterAdap), color: context.tokens.info),
+      _ResultRow(label: 'After ADAP', value: fmt.format(afterAdap), color: _kAccent),
       const SizedBox(height: 12),
       _Field(ctrl: _gpayCtrl, label: 'RR GPay Amount', icon: Icons.phone_android_rounded),
       const SizedBox(height: 6),
-      _ResultRow(label: 'After GPay', value: fmt.format(afterGpay), color: context.tokens.info),
+      _ResultRow(label: 'After GPay', value: fmt.format(afterGpay), color: _kAccent),
       const SizedBox(height: 12),
       _Field(ctrl: _expenseCtrl, label: 'Expense', icon: Icons.receipt_rounded),
       for (int i = 0; i < _extraExpenses.length; i++) ...[
@@ -593,13 +595,13 @@ class _DayRecordEntryScreenState extends ConsumerState<DayRecordEntryScreen>
           reasonCtrl: _extraExpenses[i]['reason'] as TextEditingController,
           hint: 'Expense label',
           icon: Icons.receipt_rounded,
-          color: context.tokens.danger,
+          color: _kRed,
           onRemove: () => _removeExtraExpense(i),
         ),
       ],
       if (_extraExpenses.isNotEmpty) ...[
         const SizedBox(height: 8),
-        _ResultRow(label: 'Extra Expenses Total', value: fmt.format(_extraExpenseTotal), color: context.tokens.danger),
+        _ResultRow(label: 'Extra Expenses Total', value: fmt.format(_extraExpenseTotal), color: _kRed),
       ],
     ]));
   }
@@ -613,20 +615,20 @@ class _DayRecordEntryScreenState extends ConsumerState<DayRecordEntryScreen>
     final totalDeductions = adap + gpay + exp;
     final collectionRate = total > 0 ? ((total - totalDeductions) / total * 100).clamp(0, 100) : 0.0;
     return _Card(child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-      _Label(icon: Icons.analytics_rounded, text: 'Analytics', color: context.tokens.accent),
+      const _Label(icon: Icons.analytics_rounded, text: 'Analytics', color: _kGold),
       const SizedBox(height: 16),
       Row(children: [
         Expanded(child: _StatBox(label: 'Collection Rate', value: '${collectionRate.toStringAsFixed(1)}%',
-            color: collectionRate >= 80 ? context.tokens.success : collectionRate >= 50 ? context.tokens.accent : context.tokens.danger)),
+            color: collectionRate >= 80 ? _kGreen : collectionRate >= 50 ? _kGold : _kRed)),
         const SizedBox(width: 12),
-        Expanded(child: _StatBox(label: 'Total Deductions', value: fmt.format(totalDeductions), color: context.tokens.danger)),
+        Expanded(child: _StatBox(label: 'Total Deductions', value: fmt.format(totalDeductions), color: _kRed)),
       ]),
       const SizedBox(height: 12),
       Row(children: [
-        Expanded(child: _StatBox(label: 'Total In', value: fmt.format(total), color: context.tokens.info)),
+        Expanded(child: _StatBox(label: 'Total In', value: fmt.format(total), color: _kAccent)),
         const SizedBox(width: 12),
         Expanded(child: _StatBox(label: 'Net Final', value: fmt.format(final_),
-            color: final_ >= 0 ? context.tokens.success : context.tokens.danger)),
+            color: final_ >= 0 ? _kGreen : _kRed)),
       ]),
     ]));
   }
@@ -637,30 +639,30 @@ class _DayRecordEntryScreenState extends ConsumerState<DayRecordEntryScreen>
     final afterGpay = (trail['amountAfterGpay'] as double?) ?? 0.0;
     final finalAmt = (trail['finalAmount'] as double?) ?? 0.0;
     return _Card(child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-      _Label(icon: Icons.account_tree_rounded, text: 'Calculation Trail', color: context.tokens.headerStart),
+      const _Label(icon: Icons.account_tree_rounded, text: 'Calculation Trail', color: _kPrimary),
       const SizedBox(height: 16),
       _Field(ctrl: _otherCtrl, label: 'Other Amount', icon: Icons.more_horiz_rounded),
       const SizedBox(height: 16),
-      _TrailStep(step: '1', label: 'Previous Final', value: fmt.format(_prevFinal), color: context.tokens.success),
-      _TrailStep(step: '2', label: 'Total Amount', value: fmt.format(totalAmt), color: context.tokens.info),
-      _TrailStep(step: '3', label: '− ADAP', value: '− ${fmt.format(_d(_adapCtrl))}', color: context.tokens.danger),
-      _TrailStep(step: '4', label: 'After ADAP', value: fmt.format(afterAdap), color: context.tokens.info),
-      _TrailStep(step: '5', label: '− GPay', value: '− ${fmt.format(_d(_gpayCtrl))}', color: context.tokens.danger),
-      _TrailStep(step: '6', label: 'After GPay', value: fmt.format(afterGpay), color: context.tokens.info),
-      _TrailStep(step: '7', label: '− Expense', value: '− ${fmt.format(_d(_expenseCtrl))}', color: context.tokens.danger),
+      _TrailStep(step: '1', label: 'Previous Final', value: fmt.format(_prevFinal), color: _kGreen),
+      _TrailStep(step: '2', label: 'Total Amount', value: fmt.format(totalAmt), color: _kAccent),
+      _TrailStep(step: '3', label: '− ADAP', value: '− ${fmt.format(_d(_adapCtrl))}', color: _kRed),
+      _TrailStep(step: '4', label: 'After ADAP', value: fmt.format(afterAdap), color: _kAccent),
+      _TrailStep(step: '5', label: '− GPay', value: '− ${fmt.format(_d(_gpayCtrl))}', color: _kRed),
+      _TrailStep(step: '6', label: 'After GPay', value: fmt.format(afterGpay), color: _kAccent),
+      _TrailStep(step: '7', label: '− Expense', value: '− ${fmt.format(_d(_expenseCtrl))}', color: _kRed),
       const Divider(height: 24),
       Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         decoration: BoxDecoration(
-          color: (finalAmt >= 0 ? context.tokens.success : context.tokens.danger).withValues(alpha: 0.08),
+          color: (finalAmt >= 0 ? _kGreen : _kRed).withValues(alpha: 0.08),
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: (finalAmt >= 0 ? context.tokens.success : context.tokens.danger).withValues(alpha: 0.3)),
+          border: Border.all(color: (finalAmt >= 0 ? _kGreen : _kRed).withValues(alpha: 0.3)),
         ),
         child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
           const Text('Final Amount', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15)),
           Text(fmt.format(finalAmt),
               style: TextStyle(fontWeight: FontWeight.w900, fontSize: 18,
-                  color: finalAmt >= 0 ? context.tokens.success : context.tokens.danger)),
+                  color: finalAmt >= 0 ? _kGreen : _kRed)),
         ]),
       ),
     ]));
@@ -672,7 +674,7 @@ class _DayRecordEntryScreenState extends ConsumerState<DayRecordEntryScreen>
       child: ElevatedButton(
         onPressed: _submitting ? null : _submit,
         style: ElevatedButton.styleFrom(
-          backgroundColor: context.tokens.headerStart,
+          backgroundColor: _kPrimary,
           foregroundColor: Colors.white,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(_kRadius)),
           elevation: 4,
@@ -696,19 +698,15 @@ class _Card extends StatelessWidget {
   final Widget child;
   const _Card({required this.child});
   @override
-  Widget build(BuildContext context) {
-    final t = context.tokens;
-    return Container(
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        color: t.card,
-        borderRadius: BorderRadius.circular(_kRadius),
-        border: Border.all(color: t.border),
-        boxShadow: [BoxShadow(color: t.shadow, blurRadius: 10, offset: const Offset(0, 3))],
-      ),
-      child: child,
-    );
-  }
+  Widget build(BuildContext context) => Container(
+    padding: const EdgeInsets.all(18),
+    decoration: BoxDecoration(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(_kRadius),
+      boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.06), blurRadius: 10, offset: const Offset(0, 3))],
+    ),
+    child: child,
+  );
 }
 
 class _Label extends StatelessWidget {
@@ -751,7 +749,7 @@ class _Skel extends StatelessWidget {
   Widget build(BuildContext context) => Container(
     height: 52,
     decoration: BoxDecoration(
-      color: context.tokens.skeleton,
+      color: Colors.grey.shade200,
       borderRadius: BorderRadius.circular(12),
     ),
   );
@@ -785,7 +783,7 @@ class _ResultRow extends StatelessWidget {
   Widget build(BuildContext context) => Padding(
     padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
     child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-      Text(label, style: TextStyle(fontSize: 12, color: context.tokens.mutedForeground)),
+      Text(label, style: TextStyle(fontSize: 12, color: Colors.grey.shade600)),
       Text(value, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: color)),
     ]),
   );
@@ -805,7 +803,7 @@ class _StatBox extends StatelessWidget {
       border: Border.all(color: color.withValues(alpha: 0.2)),
     ),
     child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      Text(label, style: TextStyle(fontSize: 11, color: context.tokens.mutedForeground)),
+      Text(label, style: TextStyle(fontSize: 11, color: Colors.grey.shade600)),
       const SizedBox(height: 4),
       Text(value, style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: color)),
     ]),
@@ -829,7 +827,7 @@ class _TrailStep extends StatelessWidget {
         child: Text(step, style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: color)),
       ),
       const SizedBox(width: 10),
-      Expanded(child: Text(label, style: TextStyle(fontSize: 13, color: context.tokens.foreground))),
+      Expanded(child: Text(label, style: const TextStyle(fontSize: 13, color: Colors.black87))),
       Text(value, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: color)),
     ]),
   );
@@ -876,7 +874,7 @@ class _ExtraRow extends StatelessWidget {
       const SizedBox(width: 4),
       IconButton(
         onPressed: onRemove,
-        icon: Icon(Icons.remove_circle_rounded, color: context.tokens.danger, size: 22),
+        icon: const Icon(Icons.remove_circle_rounded, color: _kRed, size: 22),
         padding: EdgeInsets.zero,
         constraints: const BoxConstraints(),
       ),
@@ -887,7 +885,7 @@ class _ExtraRow extends StatelessWidget {
         controller: reasonCtrl,
         decoration: InputDecoration(
           labelText: 'Reason (optional)',
-          prefixIcon: Icon(Icons.notes_rounded, size: 18, color: context.tokens.danger),
+          prefixIcon: const Icon(Icons.notes_rounded, size: 18, color: _kRed),
           border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
           contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
         ),

@@ -148,7 +148,7 @@ class _WelcomeHeader extends StatelessWidget {
             : 'Good evening';
 
     return SliverAppBar(
-      expandedHeight: 188,
+      expandedHeight: 168,
       pinned: true,
       backgroundColor: t.headerStart,
       foregroundColor: t.sidebarForeground,
@@ -205,7 +205,7 @@ class _WelcomeHeader extends StatelessWidget {
               ),
               Padding(
                 padding: const EdgeInsets.fromLTRB(
-                    AppTokens.space5, 64, AppTokens.space5, AppTokens.space5),
+                    AppTokens.space5, 78, AppTokens.space5, AppTokens.space4),
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.end,
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -246,18 +246,13 @@ class _WelcomeHeader extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 1),
-                    FittedBox(
-                      fit: BoxFit.scaleDown,
-                      alignment: Alignment.centerLeft,
-                      child: Text(
-                        DateFormat('EEEE, d MMMM yyyy').format(now),
-                        maxLines: 1,
-                        style: TextStyle(
-                          color: t.sidebarForeground,
-                          fontSize: 20,
-                          fontWeight: FontWeight.w800,
-                          letterSpacing: -0.4,
-                        ),
+                    Text(
+                      DateFormat('EEEE, d MMMM yyyy').format(now),
+                      style: TextStyle(
+                        color: t.sidebarForeground,
+                        fontSize: 20,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: -0.4,
                       ),
                     ),
                   ],

@@ -7,13 +7,19 @@ import 'package:microfinance_app/models/daily_cash_record.dart';
 import 'package:microfinance_app/models/region.dart';
 import 'package:microfinance_app/providers/app_providers.dart';
 import 'package:microfinance_app/services/supabase_service.dart';
-import 'package:microfinance_app/theme/app_tokens.dart';
 import 'package:microfinance_app/widgets/app_drawer.dart';
 
-// Colours come from `context.tokens` so this screen follows the active
-// theme. Orange has no semantic token; kept fixed since it reads fine on
-// every theme's card background.
-const _kOrange = Color(0xFFF97316);
+const _kBg      = Color(0xFF0A0E1A);
+const _kSurface = Color(0xFF111827);
+const _kCard    = Color(0xFF1C2333);
+const _kBorder  = Color(0xFF2A3347);
+const _kPrimary = Color(0xFF3B82F6);
+const _kGold    = Color(0xFFF59E0B);
+const _kGreen   = Color(0xFF10B981);
+const _kRed     = Color(0xFFEF4444);
+const _kOrange  = Color(0xFFF97316);
+const _kText    = Color(0xFFF1F5F9);
+const _kSubtext = Color(0xFF94A3B8);
 
 class DayRecordsScreen extends ConsumerStatefulWidget {
   const DayRecordsScreen({super.key});
@@ -67,9 +73,9 @@ class _DayRecordsScreenState extends ConsumerState<DayRecordsScreen>
   }
 
   BoxDecoration _cardDecor({Color? border}) => BoxDecoration(
-    color: context.tokens.card,
+    color: _kCard,
     borderRadius: BorderRadius.circular(16),
-    border: Border.all(color: border ?? context.tokens.border),
+    border: Border.all(color: border ?? _kBorder),
   );
 
   @override
@@ -78,23 +84,23 @@ class _DayRecordsScreenState extends ConsumerState<DayRecordsScreen>
     final regionsAsync = ref.watch(regionsProvider);
 
     return Scaffold(
-      backgroundColor: context.tokens.background,
+      backgroundColor: _kBg,
       drawer: const AppDrawer(),
       body: FadeTransition(
         opacity: _fadeAnim,
         child: CustomScrollView(slivers: [
           SliverAppBar(
             pinned: true,
-            backgroundColor: context.tokens.surface,
-            foregroundColor: context.tokens.foreground,
+            backgroundColor: _kSurface,
+            foregroundColor: _kText,
             elevation: 0,
-            title: Text(
+            title: const Text(
               'Day Records',
-              style: TextStyle(color: context.tokens.foreground, fontWeight: FontWeight.w700, fontSize: 18),
+              style: TextStyle(color: _kText, fontWeight: FontWeight.w700, fontSize: 18),
             ),
             actions: [
               IconButton(
-                icon: Icon(Icons.refresh_rounded, color: context.tokens.mutedForeground),
+                icon: const Icon(Icons.refresh_rounded, color: _kSubtext),
                 onPressed: _load,
               ),
             ],
@@ -124,25 +130,25 @@ class _DayRecordsScreenState extends ConsumerState<DayRecordsScreen>
       regionsAsync.when(
         data: (regions) => DropdownButtonFormField<String>(
           value: _selectedRegionId,
-          dropdownColor: context.tokens.card,
+          dropdownColor: _kCard,
           decoration: InputDecoration(
             labelText: 'Branch',
-            labelStyle: TextStyle(color: context.tokens.mutedForeground),
+            labelStyle: const TextStyle(color: _kSubtext),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: context.tokens.border),
+              borderSide: const BorderSide(color: _kBorder),
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: context.tokens.border),
+              borderSide: const BorderSide(color: _kBorder),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: context.tokens.info),
+              borderSide: const BorderSide(color: _kPrimary),
             ),
             contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
           ),
-          style: TextStyle(color: context.tokens.foreground),
+          style: const TextStyle(color: _kText),
           items: [
             const DropdownMenuItem(value: null, child: Text('All Branches')),
             ...regions.map((r) => DropdownMenuItem(value: r.id, child: Text(r.name))),
@@ -153,7 +159,7 @@ class _DayRecordsScreenState extends ConsumerState<DayRecordsScreen>
           },
         ),
         loading: () => const LinearProgressIndicator(minHeight: 48),
-        error: (e, _) => Text('Error: $e', style: TextStyle(color: context.tokens.danger)),
+        error: (e, _) => Text('Error: $e', style: const TextStyle(color: _kRed)),
       ),
       const SizedBox(height: 12),
       Builder(builder: (_) {
@@ -161,16 +167,16 @@ class _DayRecordsScreenState extends ConsumerState<DayRecordsScreen>
         return bagsAsync.when(
           data: (bags) => DropdownButtonFormField<String>(
             value: _selectedBagId,
-            dropdownColor: context.tokens.card,
+            dropdownColor: _kCard,
             decoration: InputDecoration(
               labelText: 'Bag',
-              labelStyle: TextStyle(color: context.tokens.mutedForeground),
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: context.tokens.border)),
-              enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: context.tokens.border)),
-              focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: context.tokens.info, width: 2)),
+              labelStyle: const TextStyle(color: _kSubtext),
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: _kBorder)),
+              enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: _kBorder)),
+              focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: _kPrimary, width: 2)),
               contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
             ),
-            style: TextStyle(color: context.tokens.foreground),
+            style: const TextStyle(color: _kText),
             items: [
               const DropdownMenuItem(value: null, child: Text('All Bags')),
               ...bags.map((b) => DropdownMenuItem(value: b.id, child: Text(b.name))),
@@ -194,8 +200,8 @@ class _DayRecordsScreenState extends ConsumerState<DayRecordsScreen>
             initialDateRange: DateTimeRange(start: _startDate, end: _endDate),
             builder: (ctx, child) => Theme(
               data: Theme.of(ctx).copyWith(
-                colorScheme: ColorScheme.light(primary: context.tokens.info),
-                dialogBackgroundColor: context.tokens.surface,
+                colorScheme: const ColorScheme.light(primary: _kPrimary),
+                dialogBackgroundColor: _kSurface,
               ),
               child: child!,
             ),
@@ -205,13 +211,13 @@ class _DayRecordsScreenState extends ConsumerState<DayRecordsScreen>
             _load();
           }
         },
-        icon: Icon(Icons.calendar_today_rounded, color: context.tokens.info),
+        icon: const Icon(Icons.calendar_today_rounded, color: _kPrimary),
         label: Text(
           '${DateFormat('dd MMM yyyy').format(_startDate)} - ${DateFormat('dd MMM yyyy').format(_endDate)}',
-          style: TextStyle(color: context.tokens.foreground),
+          style: const TextStyle(color: _kText),
         ),
         style: OutlinedButton.styleFrom(
-          side: BorderSide(color: context.tokens.border),
+          side: const BorderSide(color: _kBorder),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
         ),
@@ -223,16 +229,16 @@ class _DayRecordsScreenState extends ConsumerState<DayRecordsScreen>
     padding: const EdgeInsets.only(bottom: 12),
     child: Container(
       height: 80,
-      decoration: BoxDecoration(color: context.tokens.card, borderRadius: BorderRadius.circular(14)),
+      decoration: BoxDecoration(color: _kCard, borderRadius: BorderRadius.circular(14)),
     ),
   )));
 
   Widget _buildEmpty() => Padding(
     padding: const EdgeInsets.all(32),
     child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-      Icon(Icons.receipt_long_rounded, size: 64, color: context.tokens.mutedForeground),
+      Icon(Icons.receipt_long_rounded, size: 64, color: Colors.grey.shade300),
       const SizedBox(height: 16),
-      Text('No day records found', style: TextStyle(color: context.tokens.mutedForeground)),
+      Text('No day records found', style: TextStyle(color: Colors.grey.shade600)),
     ]),
   );
 
@@ -262,23 +268,23 @@ class _DayRecordsScreenState extends ConsumerState<DayRecordsScreen>
   }
 
   Widget _sectionLabel(String text) => Row(children: [
-    Container(width: 3, height: 16, decoration: BoxDecoration(color: context.tokens.info, borderRadius: BorderRadius.circular(2))),
+    Container(width: 3, height: 16, decoration: BoxDecoration(color: _kPrimary, borderRadius: BorderRadius.circular(2))),
     const SizedBox(width: 8),
-    Text(text, style: TextStyle(color: context.tokens.foreground, fontSize: 14, fontWeight: FontWeight.w700, letterSpacing: 0.3)),
+    Text(text, style: const TextStyle(color: _kText, fontSize: 14, fontWeight: FontWeight.w700, letterSpacing: 0.3)),
   ]);
 
   Widget _summarySection(NumberFormat fmt, double collected, double expense, double given, double netFinal) {
     return Column(children: [
       Row(children: [
-        Expanded(child: _SummaryTile(label: 'Collected', value: fmt.format(collected), color: context.tokens.success, icon: Icons.payments_rounded)),
+        Expanded(child: _SummaryTile(label: 'Collected', value: fmt.format(collected), color: _kGreen, icon: Icons.payments_rounded)),
         const SizedBox(width: 10),
-        Expanded(child: _SummaryTile(label: 'Expenses', value: fmt.format(expense), color: context.tokens.danger, icon: Icons.receipt_rounded)),
+        Expanded(child: _SummaryTile(label: 'Expenses', value: fmt.format(expense), color: _kRed, icon: Icons.receipt_rounded)),
       ]),
       const SizedBox(height: 10),
       Row(children: [
-        Expanded(child: _SummaryTile(label: 'Amount Given', value: fmt.format(given), color: context.tokens.accent, icon: Icons.account_balance_wallet_rounded)),
+        Expanded(child: _SummaryTile(label: 'Amount Given', value: fmt.format(given), color: _kGold, icon: Icons.account_balance_wallet_rounded)),
         const SizedBox(width: 10),
-        Expanded(child: _SummaryTile(label: 'Net Final', value: fmt.format(netFinal), color: netFinal >= 0 ? context.tokens.success : context.tokens.danger, icon: Icons.account_balance_rounded)),
+        Expanded(child: _SummaryTile(label: 'Net Final', value: fmt.format(netFinal), color: netFinal >= 0 ? _kGreen : _kRed, icon: Icons.account_balance_rounded)),
       ]),
     ]);
   }
@@ -293,7 +299,7 @@ class _SummaryTile extends StatelessWidget {
   Widget build(BuildContext context) => Container(
     padding: const EdgeInsets.all(14),
     decoration: BoxDecoration(
-      color: context.tokens.card,
+      color: _kCard,
       borderRadius: BorderRadius.circular(14),
       border: Border.all(color: color.withValues(alpha: 0.2)),
     ),
@@ -305,7 +311,7 @@ class _SummaryTile extends StatelessWidget {
       ),
       const SizedBox(width: 10),
       Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Text(label, style: TextStyle(color: context.tokens.mutedForeground, fontSize: 10)),
+        Text(label, style: const TextStyle(color: _kSubtext, fontSize: 10)),
         const SizedBox(height: 2),
         Text(value, style: TextStyle(color: color, fontSize: 14, fontWeight: FontWeight.w800)),
       ])),
@@ -321,9 +327,9 @@ class _RecordCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = isNeg ? context.tokens.danger : context.tokens.success;
+    final color = isNeg ? _kRed : _kGreen;
     return Material(
-      color: context.tokens.card,
+      color: _kCard,
       borderRadius: BorderRadius.circular(14),
       child: Container(
         decoration: BoxDecoration(
@@ -335,29 +341,29 @@ class _RecordCard extends StatelessWidget {
         collapsedBackgroundColor: Colors.transparent,
         title: Text(
           DateFormat('EEE, d MMM yyyy').format(record.entryDate),
-          style: TextStyle(color: context.tokens.foreground, fontWeight: FontWeight.w600),
+          style: const TextStyle(color: _kText, fontWeight: FontWeight.w600),
         ),
         subtitle: Text(
           'Final: ${fmt.format(record.finalAmount)}',
           style: TextStyle(color: color, fontWeight: FontWeight.w700),
         ),
-        iconColor: context.tokens.mutedForeground,
-        collapsedIconColor: context.tokens.mutedForeground,
+        iconColor: _kSubtext,
+        collapsedIconColor: _kSubtext,
         children: [
           Padding(
             padding: const EdgeInsets.all(14),
             child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-              _DetailRow('Opening Balance', fmt.format(record.previousFinalAmount), context.tokens.accent),
-              _DetailRow('Net in Hand', fmt.format(record.netAmountInHand), context.tokens.foreground),
-              _DetailRow('Collected', fmt.format(record.collectedAmount), context.tokens.success),
+              _DetailRow('Opening Balance', fmt.format(record.previousFinalAmount), _kGold),
+              _DetailRow('Net in Hand', fmt.format(record.netAmountInHand), _kText),
+              _DetailRow('Collected', fmt.format(record.collectedAmount), _kGreen),
               _DetailRow('Amount Given', fmt.format(record.adapAmount), _kOrange),
-              _DetailRow('Doc Fees', fmt.format(record.documentFees), context.tokens.info),
-              Padding(padding: EdgeInsets.symmetric(vertical: 6), child: Divider(height: 1, color: context.tokens.border)),
-              _DetailRow('RR GPay', '- ${fmt.format(record.rrGpayAmount)}', context.tokens.danger),
-              _DetailRow('Expense', '- ${fmt.format(record.expense)}', context.tokens.danger),
-              Padding(padding: EdgeInsets.symmetric(vertical: 6), child: Divider(height: 1, color: context.tokens.border)),
+              _DetailRow('Doc Fees', fmt.format(record.documentFees), _kPrimary),
+              const Padding(padding: EdgeInsets.symmetric(vertical: 6), child: Divider(height: 1, color: _kBorder)),
+              _DetailRow('RR GPay', '- ${fmt.format(record.rrGpayAmount)}', _kRed),
+              _DetailRow('Expense', '- ${fmt.format(record.expense)}', _kRed),
+              const Padding(padding: EdgeInsets.symmetric(vertical: 6), child: Divider(height: 1, color: _kBorder)),
               Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-                Text('Final Amount', style: TextStyle(color: context.tokens.foreground, fontWeight: FontWeight.w700, fontSize: 14)),
+                const Text('Final Amount', style: TextStyle(color: _kText, fontWeight: FontWeight.w700, fontSize: 14)),
                 Text(fmt.format(record.finalAmount),
                   style: TextStyle(color: color, fontWeight: FontWeight.w900, fontSize: 16)),
               ]),
@@ -372,8 +378,8 @@ class _RecordCard extends StatelessWidget {
                   icon: const Icon(Icons.edit_rounded, size: 16),
                   label: const Text('Edit Record'),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: context.tokens.info.withValues(alpha: 0.15),
-                    foregroundColor: context.tokens.info,
+                    backgroundColor: _kPrimary.withValues(alpha: 0.15),
+                    foregroundColor: _kPrimary,
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                     padding: const EdgeInsets.symmetric(vertical: 10),
                   ),
@@ -396,7 +402,7 @@ class _DetailRow extends StatelessWidget {
   Widget build(BuildContext context) => Padding(
     padding: const EdgeInsets.symmetric(vertical: 4),
     child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-      Text(label, style: TextStyle(color: context.tokens.mutedForeground, fontSize: 12)),
+      Text(label, style: const TextStyle(color: _kSubtext, fontSize: 12)),
       Text(value, style: TextStyle(color: color, fontSize: 12, fontWeight: FontWeight.w600)),
     ]),
   );

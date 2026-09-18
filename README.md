@@ -76,8 +76,8 @@ Get your Supabase project URL and anon key from:
 Set them as environment variables or update `lib/app.dart`:
 
 ```bash
-flutter run --dart-define=supabase_url=https://your-project.supabase.co
-flutter run --dart-define=supabase_anon_key=your-anon-key
+flutter run --dart-define=SUPABASE_URL=https://your-project.supabase.co
+flutter run --dart-define=SUPABASE_ANON_KEY=your-anon-key
 ```
 
 Or edit `lib/app.dart` and replace the placeholder values.
@@ -87,43 +87,6 @@ Or edit `lib/app.dart` and replace the placeholder values.
 ```bash
 flutter run
 ```
-
-### 5. Deploy to Vercel (Auto-Deploy)
-
-The project is configured for automatic deployment on every push to `main`.
-
-#### One-Time Setup
-
-```powershell
-cd your-project-directory
-
-# 1. Add GitHub remote
-git remote add origin <your-github-repo-url>
-
-# 2. Push to main (triggers auto-deploy)
-git branch -M main
-git push -u origin main
-```
-
-#### GitHub Secrets (in repo Settings → Secrets)
-
-| Secret | Value |
-|---|---|
-| `supabase_url` | `https://hgauwydrzosafwprtsld.supabase.co` |
-| `supabase_anon_key` | `eyJhbGciOiJIUzI1NiIs...QEZE7U85JoZdu-9k8cDxlTuJlZF7B040eL_e_R40zyY` |
-| `vercel_token` | From https://vercel.com/account/settings |
-| `vercel_org_id` | From https://vercel.com/account/settings |
-| `vercel_project_id` | From your Vercel project settings |
-
-#### After Setup
-- Every push to `main` → tests run → web builds → deploys to Vercel
-- Manual deploy: `bash deploy.sh` (requires env vars set)
-
-#### Vercel Environment Variables (in Vercel dashboard)
-
-Set in project settings → Environment Variables:
-- `supabase_url`
-- `supabase_anon_key`
 
 ## Features
 
