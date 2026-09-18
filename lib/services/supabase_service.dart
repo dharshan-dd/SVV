@@ -967,10 +967,11 @@ class SupabaseService {
     double adapAmount = 0.0,
     double rrGpayAmount = 0.0,
     double expense = 0.0,
-    double additionalCollection = 0.0,
-    double additionalDeduction = 0.0,
-    double otherAmount = 0.0,
-    double previousFinalAmount = 0.0,
+     double additionalCollection = 0.0,
+     double additionalDeduction = 0.0,
+     double otherAmount = 0.0,
+     double extraNetAmount = 0.0,
+     double previousFinalAmount = 0.0,
   }) async {
     final data = {
       'entry_date': entryDate.toIso8601String().split('T')[0],
@@ -990,6 +991,7 @@ class SupabaseService {
       'additional_collection': additionalCollection,
       'additional_deduction': additionalDeduction,
       'other_amount': otherAmount,
+      'extra_net_amount': extraNetAmount,
       'previous_final_amount': previousFinalAmount,
     };
 
@@ -1018,10 +1020,11 @@ class SupabaseService {
     double? adapAmount,
     double? rrGpayAmount,
     double? expense,
-    double? additionalCollection,
-    double? additionalDeduction,
-    double? otherAmount,
-    double? previousFinalAmount,
+     double? additionalCollection,
+     double? additionalDeduction,
+     double? otherAmount,
+     double? extraNetAmount,
+     double? previousFinalAmount,
   }) async {
     final data = <String, dynamic>{};
     if (entryDate != null) data['entry_date'] = entryDate.toIso8601String().split('T')[0];
@@ -1041,6 +1044,7 @@ class SupabaseService {
     if (additionalCollection != null) data['additional_collection'] = additionalCollection;
     if (additionalDeduction != null) data['additional_deduction'] = additionalDeduction;
     if (otherAmount != null) data['other_amount'] = otherAmount;
+    if (extraNetAmount != null) data['extra_net_amount'] = extraNetAmount;
     if (previousFinalAmount != null) data['previous_final_amount'] = previousFinalAmount;
 
     final response = await _client

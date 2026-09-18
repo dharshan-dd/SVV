@@ -30,6 +30,7 @@ class DailyCashRecord {
   final double additionalCollection;
   final double additionalDeduction;
   final double otherAmount;
+  final double extraNetAmount;
 
   final double previousFinalAmount;
 
@@ -56,10 +57,11 @@ class DailyCashRecord {
     this.amountAfterGpay = 0.0,
     this.expense = 0.0,
     this.finalAmount = 0.0,
-    this.additionalCollection = 0.0,
-    this.additionalDeduction = 0.0,
-    this.otherAmount = 0.0,
-    this.previousFinalAmount = 0.0,
+     this.additionalCollection = 0.0,
+     this.additionalDeduction = 0.0,
+     this.otherAmount = 0.0,
+     this.extraNetAmount = 0.0,
+     this.previousFinalAmount = 0.0,
     required this.createdAt,
     required this.updatedAt,
   });
@@ -85,10 +87,11 @@ class DailyCashRecord {
       amountAfterGpay: (json['amount_after_gpay'] as num?)?.toDouble() ?? 0.0,
       expense: (json['expense'] as num?)?.toDouble() ?? 0.0,
       finalAmount: (json['final_amount'] as num?)?.toDouble() ?? 0.0,
-      additionalCollection: (json['additional_collection'] as num?)?.toDouble() ?? 0.0,
-      additionalDeduction: (json['additional_deduction'] as num?)?.toDouble() ?? 0.0,
-      otherAmount: (json['other_amount'] as num?)?.toDouble() ?? 0.0,
-      previousFinalAmount: (json['previous_final_amount'] as num?)?.toDouble() ?? 0.0,
+       additionalCollection: (json['additional_collection'] as num?)?.toDouble() ?? 0.0,
+       additionalDeduction: (json['additional_deduction'] as num?)?.toDouble() ?? 0.0,
+       otherAmount: (json['other_amount'] as num?)?.toDouble() ?? 0.0,
+       extraNetAmount: (json['extra_net_amount'] as num?)?.toDouble() ?? 0.0,
+       previousFinalAmount: (json['previous_final_amount'] as num?)?.toDouble() ?? 0.0,
       createdAt: DateTime.parse(json['created_at'] as String),
       updatedAt: DateTime.parse(json['updated_at'] as String),
     );
@@ -111,10 +114,11 @@ class DailyCashRecord {
       'adap_amount': adapAmount,
       'rr_gpay_amount': rrGpayAmount,
       'expense': expense,
-      'additional_collection': additionalCollection,
-      'additional_deduction': additionalDeduction,
-      'other_amount': otherAmount,
-      'previous_final_amount': previousFinalAmount,
+       'additional_collection': additionalCollection,
+       'additional_deduction': additionalDeduction,
+       'other_amount': otherAmount,
+       'extra_net_amount': extraNetAmount,
+       'previous_final_amount': previousFinalAmount,
     };
   }
 
@@ -134,10 +138,11 @@ class DailyCashRecord {
     double? adapAmount,
     double? rrGpayAmount,
     double? expense,
-    double? additionalCollection,
-    double? additionalDeduction,
-    double? otherAmount,
-    double? previousFinalAmount,
+     double? additionalCollection,
+     double? additionalDeduction,
+     double? otherAmount,
+     double? extraNetAmount,
+     double? previousFinalAmount,
     DateTime? createdAt,
     DateTime? updatedAt,
   }) {
@@ -161,10 +166,11 @@ class DailyCashRecord {
       amountAfterGpay: amountAfterGpay,
       expense: expense ?? this.expense,
       finalAmount: finalAmount,
-      additionalCollection: additionalCollection ?? this.additionalCollection,
-      additionalDeduction: additionalDeduction ?? this.additionalDeduction,
-      otherAmount: otherAmount ?? this.otherAmount,
-      previousFinalAmount: previousFinalAmount ?? this.previousFinalAmount,
+       additionalCollection: additionalCollection ?? this.additionalCollection,
+       additionalDeduction: additionalDeduction ?? this.additionalDeduction,
+       otherAmount: otherAmount ?? this.otherAmount,
+       extraNetAmount: extraNetAmount ?? this.extraNetAmount,
+       previousFinalAmount: previousFinalAmount ?? this.previousFinalAmount,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
     );

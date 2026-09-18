@@ -49,6 +49,7 @@ class _DayRecordEntryScreenState extends ConsumerState<DayRecordEntryScreen>
   final _gpayCtrl = TextEditingController();
   final _expenseCtrl = TextEditingController();
   final _otherCtrl = TextEditingController();
+  final _extraNetCtrl = TextEditingController();
 
   final List<Map<String, dynamic>> _extraCollections = [];
   final List<Map<String, dynamic>> _extraExpenses = [];
@@ -66,7 +67,7 @@ class _DayRecordEntryScreenState extends ConsumerState<DayRecordEntryScreen>
     _animCtrl = AnimationController(vsync: this, duration: const Duration(milliseconds: 500));
     _fadeAnim = CurvedAnimation(parent: _animCtrl, curve: Curves.easeOut);
     _animCtrl.forward();
-    for (final c in [_netCtrl, _collectedCtrl, _remainingCtrl, _docFeesCtrl, _adapCtrl, _gpayCtrl, _expenseCtrl, _otherCtrl]) {
+    for (final c in [_netCtrl, _collectedCtrl, _remainingCtrl, _docFeesCtrl, _adapCtrl, _gpayCtrl, _expenseCtrl, _otherCtrl, _extraNetCtrl]) {
       c.addListener(() => setState(() {}));
     }
     _entryDate = widget.initialDate ?? DateTime.now();
@@ -129,7 +130,7 @@ class _DayRecordEntryScreenState extends ConsumerState<DayRecordEntryScreen>
   void dispose() {
     _animCtrl.dispose();
     for (final c in [_netCtrl, _collectedCtrl, _remainingCtrl, _reasonCtrl,
-        _docFeesCtrl, _adapCtrl, _gpayCtrl, _expenseCtrl, _otherCtrl]) {
+        _docFeesCtrl, _adapCtrl, _gpayCtrl, _expenseCtrl, _otherCtrl, _extraNetCtrl]) {
       c.dispose();
     }
     for (final e in _extraCollections) {
@@ -160,6 +161,7 @@ class _DayRecordEntryScreenState extends ConsumerState<DayRecordEntryScreen>
     rrGpayAmount: _d(_gpayCtrl),
     expense: _d(_expenseCtrl) + _extraExpenseTotal,
     otherAmount: _d(_otherCtrl),
+    extraNetAmount: _d(_extraNetCtrl),
   );
 
   bool get _ready => _selectedBagId != null;
@@ -204,7 +206,7 @@ class _DayRecordEntryScreenState extends ConsumerState<DayRecordEntryScreen>
       _existingRecord = existing;
       _isEditMode = existing != null;
       for (final c in [_netCtrl, _collectedCtrl, _remainingCtrl, _reasonCtrl,
-          _docFeesCtrl, _adapCtrl, _gpayCtrl, _expenseCtrl, _otherCtrl]) {
+          _docFeesCtrl, _adapCtrl, _gpayCtrl, _expenseCtrl, _otherCtrl, _extraNetCtrl]) {
         c.clear();
       }
       _netCtrl.text = opening > 0 ? opening.toStringAsFixed(2) : '';
@@ -218,6 +220,7 @@ class _DayRecordEntryScreenState extends ConsumerState<DayRecordEntryScreen>
         _gpayCtrl.text = existing.rrGpayAmount > 0 ? existing.rrGpayAmount.toStringAsFixed(2) : '';
         _expenseCtrl.text = existing.expense > 0 ? existing.expense.toStringAsFixed(2) : '';
         _otherCtrl.text = existing.otherAmount > 0 ? existing.otherAmount.toStringAsFixed(2) : '';
+        _extraNetCtrl.text = existing.extraNetAmount > 0 ? existing.extraNetAmount.toStringAsFixed(2) : '';
       }
     });
   }
@@ -261,19 +264,21 @@ class _DayRecordEntryScreenState extends ConsumerState<DayRecordEntryScreen>
               documentFees: _d(_docFeesCtrl), adapAmount: _d(_adapCtrl),
               rrGpayAmount: _d(_gpayCtrl), expense: _d(_expenseCtrl) + _extraExpenseTotal,
               otherAmount: _d(_otherCtrl), previousFinalAmount: _prevFinal,
-              additionalCollection: _extraCollectionTotal,
-            )
-          : await svc.createDailyCashRecord(
-              entryDate: _entryDate, regionId: _selectedRegionId!,
-              modelId: _selectedModelId!, bagId: _selectedBagId!,
-              weekStartDate: _weekStart(_entryDate), dayOfWeek: _entryDate.weekday % 7,
-              netAmountInHand: _d(_netCtrl), collectedAmount: _d(_collectedCtrl) + _extraCollectionTotal,
-              remainingAmount: _d(_remainingCtrl), remainingReason: _reasonCtrl.text.trim(),
-              documentFees: _d(_docFeesCtrl), adapAmount: _d(_adapCtrl),
-              rrGpayAmount: _d(_gpayCtrl), expense: _d(_expenseCtrl) + _extraExpenseTotal,
-              otherAmount: _d(_otherCtrl), previousFinalAmount: _prevFinal,
-              additionalCollection: _extraCollectionTotal,
-            );
+               additionalCollection: _extraCollectionTotal,
+               extraNetAmount: _d(_extraNetCtrl),
+             )
+             : await svc.createDailyCashRecord(
+                 entryDate: _entryDate, regionId: _selectedRegionId!,
+                 modelId: _selectedModelId!, bagId: _selectedBagId!,
+                 weekStartDate: _weekStart(_entryDate), dayOfWeek: _entryDate.weekday % 7,
+                 netAmountInHand: _d(_netCtrl), collectedAmount: _d(_collectedCtrl) + _extraCollectionTotal,
+                 remainingAmount: _d(_remainingCtrl), remainingReason: _reasonCtrl.text.trim(),
+                 documentFees: _d(_docFeesCtrl), adapAmount: _d(_adapCtrl),
+                 rrGpayAmount: _d(_gpayCtrl), expense: _d(_expenseCtrl) + _extraExpenseTotal,
+                 otherAmount: _d(_otherCtrl), previousFinalAmount: _prevFinal,
+                 additionalCollection: _extraCollectionTotal,
+                 extraNetAmount: _d(_extraNetCtrl),
+             );
 
       if (!mounted) return;
       final calc = CollectionCalculationService();
@@ -531,6 +536,8 @@ class _DayRecordEntryScreenState extends ConsumerState<DayRecordEntryScreen>
       _Field(ctrl: _netCtrl, label: 'Opening Balance (Net in Hand)', icon: Icons.account_balance_rounded),
       const SizedBox(height: 12),
       _Field(ctrl: _collectedCtrl, label: 'Collected Amount', icon: Icons.payments_rounded),
+      const SizedBox(height: 12),
+      _Field(ctrl: _extraNetCtrl, label: 'Extra Net Amount', icon: Icons.account_balance_wallet_rounded),
       const SizedBox(height: 12),
       _Field(ctrl: _remainingCtrl, label: 'Remaining Amount', icon: Icons.pending_rounded),
       const SizedBox(height: 12),

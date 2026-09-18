@@ -121,6 +121,7 @@ class _WeeklyDashboardScreenState extends ConsumerState<WeeklyDashboardScreen>
                     final totalExpense = currentWeekRecords.fold(0.0, (s, r) => s + r.expense);
                     final totalGiven = currentWeekRecords.fold(0.0, (s, r) => s + r.adapAmount);
                     final totalGpay = currentWeekRecords.fold(0.0, (s, r) => s + r.rrGpayAmount);
+                    final totalExtraNet = currentWeekRecords.fold(0.0, (s, r) => s + r.extraNetAmount);
 
                     final currentWeekDates = <String>{};
                     final recordsByDate = <String, List<DailyCashRecord>>{};
@@ -155,7 +156,7 @@ class _WeeklyDashboardScreenState extends ConsumerState<WeeklyDashboardScreen>
                          const SizedBox(height: 16),
                          _buildBagFilter(fmt),
                          const SizedBox(height: 16),
-                          _summaryRow(fmt, weekFinal, totalCollected, totalAdditionalCollection, totalExpense, totalGiven, totalGpay, daysRecorded),
+                           _summaryRow(fmt, weekFinal, totalCollected, totalAdditionalCollection, totalExpense, totalGiven, totalGpay, totalExtraNet, daysRecorded),
                          if (_selectedBagIds.isNotEmpty) ...[
                            const SizedBox(height: 24),
                            _perBagAnalysis(currentWeekRecords, fmt),
@@ -184,6 +185,9 @@ class _WeeklyDashboardScreenState extends ConsumerState<WeeklyDashboardScreen>
                                 }
                                 if (mounted) setState(() => _loadRecords());
                               },
+                              onNetAdd: dayRecords.isNotEmpty
+                                  ? () => _showExtraNetDialog(dayRecords.first)
+                                  : null,
                             );
                           }),
                         ],
@@ -382,6 +386,7 @@ class _WeeklyDashboardScreenState extends ConsumerState<WeeklyDashboardScreen>
             final bagExpense = bagRecords.fold(0.0, (s, r) => s + r.expense);
             final bagGiven = bagRecords.fold(0.0, (s, r) => s + r.adapAmount);
             final bagGpay = bagRecords.fold(0.0, (s, r) => s + r.rrGpayAmount);
+            final bagExtraNet = bagRecords.fold(0.0, (s, r) => s + r.extraNetAmount);
 
             return Container(
               margin: const EdgeInsets.only(bottom: 12),
@@ -394,7 +399,7 @@ class _WeeklyDashboardScreenState extends ConsumerState<WeeklyDashboardScreen>
               child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
                 Text(bagName, style: TextStyle(color: _kText, fontSize: 14, fontWeight: FontWeight.w700)),
                 const SizedBox(height: 12),
-                _summaryRow(fmt, bagFinal, bagCollected, bagAdditionalCollection, bagExpense, bagGiven, bagGpay, sortedBag.length),
+                _summaryRow(fmt, bagFinal, bagCollected, bagAdditionalCollection, bagExpense, bagGiven, bagGpay, bagExtraNet, sortedBag.length),
               ]),
             );
           },
@@ -439,7 +444,7 @@ class _WeeklyDashboardScreenState extends ConsumerState<WeeklyDashboardScreen>
     return ((d.difference(startOfYear).inDays + startOfYear.weekday) / 7).ceil();
   }
 
-  Widget _summaryRow(NumberFormat fmt, double weekFinal, double collected, double additionalCollection, double expense, double given, double gpay, int days) {
+  Widget _summaryRow(NumberFormat fmt, double weekFinal, double collected, double additionalCollection, double expense, double given, double gpay, double extraNet, int days) {
     return Column(children: [
       Row(children: [
         Expanded(child: _SummaryTile(label: 'Week Final', value: fmt.format(weekFinal), color: weekFinal >= 0 ? _kGreen : _kRed, icon: Icons.account_balance_rounded)),
@@ -457,6 +462,8 @@ class _WeeklyDashboardScreenState extends ConsumerState<WeeklyDashboardScreen>
       ]),
       const SizedBox(height: 10),
       Row(children: [
+        if (extraNet > 0)
+          Expanded(child: _SummaryTile(label: 'Extra Net', value: fmt.format(extraNet), color: _kGreen, icon: Icons.account_balance_wallet_rounded)),
         Expanded(child: _SummaryTile(label: 'Days Recorded', value: '$days / 7', color: _kGold, icon: Icons.calendar_today_rounded)),
         const SizedBox(width: 10),
         Expanded(child: _SummaryTile(label: 'GPay', value: fmt.format(gpay), color: _kPurple, icon: Icons.swap_horiz_rounded)),
@@ -587,6 +594,65 @@ class _WeeklyDashboardScreenState extends ConsumerState<WeeklyDashboardScreen>
       if (mounted) setState(() => _loadRecords());
     }
   }
+
+  void _showExtraNetDialog(DailyCashRecord record) {
+    final ctrl = TextEditingController();
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: _kCard,
+        title: const Text('Add Extra Net', style: TextStyle(color: _kText)),
+        content: Column(mainAxisSize: MainAxisSize.min, children: [
+          Text('Add extra cash to net in hand for ${DateFormat('EEE, d MMM').format(record.entryDate)}',
+              style: const TextStyle(color: _kSubtext, fontSize: 12)),
+          const SizedBox(height: 16),
+          TextField(
+            controller: ctrl,
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            style: const TextStyle(color: _kText),
+            decoration: InputDecoration(
+              labelText: 'Extra Net Amount',
+              labelStyle: const TextStyle(color: _kSubtext),
+              prefixIcon: const Icon(Icons.account_balance_wallet_rounded, color: _kGreen),
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+              filled: true,
+              fillColor: _kSurface,
+            ),
+          ),
+        ]),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel', style: TextStyle(color: _kSubtext))),
+          ElevatedButton(
+            onPressed: () async {
+              final amount = double.tryParse(ctrl.text.trim()) ?? 0.0;
+              if (amount <= 0) return;
+              Navigator.pop(ctx);
+              final svc = ref.read(supabaseServiceProvider);
+              try {
+                await svc.updateDailyCashRecord(
+                  id: record.id,
+                  extraNetAmount: record.extraNetAmount + amount,
+                );
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Extra net added: ${NumberFormat.simpleCurrency(locale: 'en_IN', decimalDigits: 2).format(amount)}'), backgroundColor: _kGreen, behavior: SnackBarBehavior.floating),
+                  );
+                  setState(() => _loadRecords());
+                }
+              } catch (e) {
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Error: $e'), backgroundColor: _kRed),
+                  );
+                }
+              }
+            },
+            child: const Text('Add', style: TextStyle(color: _kText)),
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 class _NavBtn extends StatelessWidget {
@@ -638,8 +704,9 @@ class _DayCard extends StatefulWidget {
   final List<DailyCashRecord> records;
   final NumberFormat fmt;
   final VoidCallback onTap;
+  final VoidCallback? onNetAdd;
   final bool isLastWeek;
-  const _DayCard({required this.date, required this.records, required this.fmt, required this.onTap, this.isLastWeek = false});
+  const _DayCard({required this.date, required this.records, required this.fmt, required this.onTap, this.onNetAdd, this.isLastWeek = false});
 
   @override
   State<_DayCard> createState() => _DayCardState();
@@ -662,6 +729,11 @@ class _DayCardState extends State<_DayCard> {
           Text(hasRecord ? '${widget.records.length} record${widget.records.length > 1 ? 's' : ''}' : 'No record', style: TextStyle(color: hasRecord ? _kGreen : _kSubtext, fontSize: 12, fontWeight: FontWeight.w600)),
           if (hasRecord && widget.isLastWeek)
             const Padding(padding: EdgeInsets.only(left: 4), child: Text('Last Week', style: TextStyle(color: _kGold, fontSize: 10, fontWeight: FontWeight.w600))),
+          if (hasRecord) ...[
+            const SizedBox(width: 8),
+            if (widget.onNetAdd != null)
+              _NetAddBtn(onTap: widget.onNetAdd!),
+          ],
           if (!hasRecord) ...[
             const SizedBox(width: 8),
             _AddBtn(onTap: widget.onTap),
@@ -677,6 +749,8 @@ class _DayCardState extends State<_DayCard> {
                 if (r.additionalCollection > 0)
                   _DetailRow('+ Additional Collection', widget.fmt.format(r.additionalCollection), _kGold),
                 _DetailRow('Net in Hand', widget.fmt.format(r.netAmountInHand), _kGreen),
+                if (r.extraNetAmount > 0)
+                  _DetailRow('+ Extra Net', widget.fmt.format(r.extraNetAmount), _kGreen),
                 _DetailRow('Expense', '− ${widget.fmt.format(r.expense)}', _kRed),
                 _DetailRow('GPay', '− ${widget.fmt.format(r.rrGpayAmount)}', _kRed),
                 _DetailRow('Adap', widget.fmt.format(r.adapAmount), _kGold),
@@ -725,6 +799,28 @@ class _DetailRow extends StatelessWidget {
       Text(label, style: const TextStyle(color: _kSubtext, fontSize: 12)),
       Text(value, style: TextStyle(color: color, fontSize: 12, fontWeight: FontWeight.w600)),
     ]),
+  );
+}
+
+class _NetAddBtn extends StatelessWidget {
+  final VoidCallback onTap;
+  const _NetAddBtn({required this.onTap});
+  @override
+  Widget build(BuildContext context) => GestureDetector(
+    onTap: onTap,
+    child: Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+        color: _kGreen.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: _kGreen.withValues(alpha: 0.3)),
+      ),
+      child: const Row(mainAxisSize: MainAxisSize.min, children: [
+        Icon(Icons.add_rounded, color: _kGreen, size: 14),
+        SizedBox(width: 4),
+        Text('Net+', style: TextStyle(color: _kGreen, fontSize: 12, fontWeight: FontWeight.w600)),
+      ]),
+    ),
   );
 }
 

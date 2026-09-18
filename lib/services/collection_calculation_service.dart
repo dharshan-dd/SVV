@@ -265,8 +265,9 @@ class CollectionCalculationService {
     required double rrGpayAmount,
     required double expense,
     double otherAmount = 0.0,
+    double extraNetAmount = 0.0,
   }) {
-    final totalAmount = netAmountInHand + collectedAmount + remainingAmount + documentFees;
+    final totalAmount = netAmountInHand + collectedAmount + remainingAmount + documentFees + extraNetAmount;
     final amountAfterAdap = totalAmount - adapAmount;
     final amountAfterGpay = amountAfterAdap - rrGpayAmount;
     final finalAmount = amountAfterGpay - expense;
@@ -285,6 +286,7 @@ class CollectionCalculationService {
       'expense': expense,
       'finalAmount': finalAmount,
       'otherAmount': otherAmount,
+      'extraNetAmount': extraNetAmount,
     };
   }
 }
