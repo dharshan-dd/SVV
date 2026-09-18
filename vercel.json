@@ -3,14 +3,20 @@
   "builds": [
     {
       "src": "pubspec.yaml",
-      "use": "@vercel/flutter"
+      "use": "@vercel/flutter",
+      "env": {
+        "SUPABASE_URL": "@SUPABASE_URL",
+        "SUPABASE_ANON_KEY": "@SUPABASE_ANON_KEY"
+      }
     }
   ],
   "routes": [
     { "src": "/(.*)", "dest": "/index.html" }
   ],
-  "env": {
-    "SUPABASE_URL": "@SUPABASE_URL",
-    "SUPABASE_ANON_KEY": "@SUPABASE_ANON_KEY"
+  "build": {
+    "env": {
+      "SUPABASE_URL": "@SUPABASE_URL",
+      "SUPABASE_ANON_KEY": "@SUPABASE_ANON_KEY"
+    }
   }
 }
