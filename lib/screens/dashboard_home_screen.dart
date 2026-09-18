@@ -205,7 +205,7 @@ class _WelcomeHeader extends StatelessWidget {
               ),
               Padding(
                 padding: const EdgeInsets.fromLTRB(
-                    AppTokens.space5, 78, AppTokens.space5, AppTokens.space4),
+                    AppTokens.space5, 66, AppTokens.space5, AppTokens.space4),
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.end,
                   crossAxisAlignment: CrossAxisAlignment.start,

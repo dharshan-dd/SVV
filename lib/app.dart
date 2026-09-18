@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:microfinance_app/main.dart';
+import 'package:microfinance_app/theme/index.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -17,9 +18,14 @@ Future<void> main() async {
     debug: true,
   );
 
+  final initialTheme = await loadInitialThemeChoice();
+
   runApp(
-    const ProviderScope(
-      child: MyApp(),
+    ProviderScope(
+      overrides: [
+        initialThemeChoiceProvider.overrideWithValue(initialTheme),
+      ],
+      child: const MyApp(),
     ),
   );
 }

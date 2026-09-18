@@ -37,3 +37,8 @@ coverage/
 *.cover
 *.profraw
 *.profdata
+
+# Flutter build cache (do not commit; only build/web/ is tracked for deployment)
+build/flutter_assets/
+build/[0-9a-f]*/
+*.track.dill
