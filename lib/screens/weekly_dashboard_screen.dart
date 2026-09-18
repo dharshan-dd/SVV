@@ -105,11 +105,6 @@ class _WeeklyDashboardScreenState extends ConsumerState<WeeklyDashboardScreen>
                         !r.entryDate.isBefore(weekStart) && !r.entryDate.isAfter(weekEnd)
                     ).toList();
 
-                    double runningTotal = 0.0;
-                    for (final r in sortedByUpdated) {
-                      runningTotal = r.finalAmount;
-                    }
-
                     final latestPerBag = <String, DailyCashRecord>{};
                     for (final r in sortedByUpdated) {
                       if (!r.entryDate.isBefore(weekStart) && !r.entryDate.isAfter(weekEnd)) {
@@ -136,12 +131,19 @@ class _WeeklyDashboardScreenState extends ConsumerState<WeeklyDashboardScreen>
                     }
                     final daysRecorded = currentWeekDates.length;
 
-                    final carryoverByDate = <String, double>{};
+                    final lastWeekByDate = <String, List<DailyCashRecord>>{};
                     for (int i = 0; i < 7; i++) {
                       final date = weekStart.add(Duration(days: i));
                       final key = DateFormat('yyyy-MM-dd').format(date);
                       if (!currentWeekDates.contains(key)) {
-                        carryoverByDate[key] = runningTotal;
+                        final lastWeekDate = date.subtract(const Duration(days: 7));
+                        final lastKey = DateFormat('yyyy-MM-dd').format(lastWeekDate);
+                        final lastWeekRecordsForDay = sortedByUpdated.where((r) =>
+                          DateFormat('yyyy-MM-dd').format(r.entryDate) == lastKey
+                        ).toList();
+                        if (lastWeekRecordsForDay.isNotEmpty) {
+                          lastWeekByDate[key] = lastWeekRecordsForDay;
+                        }
                       }
                     }
 
@@ -156,7 +158,7 @@ class _WeeklyDashboardScreenState extends ConsumerState<WeeklyDashboardScreen>
                           _summaryRow(fmt, weekFinal, totalCollected, totalAdditionalCollection, totalExpense, totalGiven, totalGpay, daysRecorded),
                          if (_selectedBagIds.isNotEmpty) ...[
                            const SizedBox(height: 24),
-                           _perBagAnalysis(snap.data ?? [], fmt),
+                           _perBagAnalysis(currentWeekRecords, fmt),
                          ],
                         const SizedBox(height: 24),
                         _sectionLabel('Day Records'),
@@ -165,14 +167,15 @@ class _WeeklyDashboardScreenState extends ConsumerState<WeeklyDashboardScreen>
                           Builder(builder: (_) {
                             final date = weekStart.add(Duration(days: i));
                             final key = DateFormat('yyyy-MM-dd').format(date);
+                            final dayRecords = lastWeekByDate[key] ?? recordsByDate[key] ?? const [];
                             return _DayCard(
                               date: date,
-                              records: recordsByDate[key] ?? const [],
-                              carryover: carryoverByDate[key],
+                              records: dayRecords,
+                              isLastWeek: lastWeekByDate.containsKey(key),
                               fmt: fmt,
                               onTap: () async {
                                 final dateStr = DateFormat('yyyy-MM-dd').format(date);
-                                final recs = recordsByDate[key] ?? [];
+                                final recs = dayRecords;
                                 if (recs.isNotEmpty) {
                                   final r0 = recs.first;
                                   await context.push('/day-record-entry?date=$dateStr&regionId=${r0.regionId}&modelId=${r0.modelId}&bagId=${r0.bagId}');
@@ -633,10 +636,10 @@ class _SummaryTile extends StatelessWidget {
 class _DayCard extends StatefulWidget {
   final DateTime date;
   final List<DailyCashRecord> records;
-  final double? carryover;
   final NumberFormat fmt;
   final VoidCallback onTap;
-  const _DayCard({required this.date, required this.records, required this.carryover, required this.fmt, required this.onTap});
+  final bool isLastWeek;
+  const _DayCard({required this.date, required this.records, required this.fmt, required this.onTap, this.isLastWeek = false});
 
   @override
   State<_DayCard> createState() => _DayCardState();
@@ -657,9 +660,11 @@ class _DayCardState extends State<_DayCard> {
           Expanded(child: Text(DateFormat('EEE, d MMM').format(widget.date), style: const TextStyle(color: _kText, fontWeight: FontWeight.w600, fontSize: 14))),
           const SizedBox(width: 4),
           Text(hasRecord ? '${widget.records.length} record${widget.records.length > 1 ? 's' : ''}' : 'No record', style: TextStyle(color: hasRecord ? _kGreen : _kSubtext, fontSize: 12, fontWeight: FontWeight.w600)),
+          if (hasRecord && widget.isLastWeek)
+            const Padding(padding: EdgeInsets.only(left: 4), child: Text('Last Week', style: TextStyle(color: _kGold, fontSize: 10, fontWeight: FontWeight.w600))),
           if (!hasRecord) ...[
             const SizedBox(width: 8),
-            _CarryoverOrAddBtn(carryover: widget.carryover, fmt: widget.fmt, onTap: widget.onTap),
+            _AddBtn(onTap: widget.onTap),
           ],
         ]),
         children: [
@@ -721,24 +726,6 @@ class _DetailRow extends StatelessWidget {
       Text(value, style: TextStyle(color: color, fontSize: 12, fontWeight: FontWeight.w600)),
     ]),
   );
-}
-
-class _CarryoverOrAddBtn extends StatelessWidget {
-  final double? carryover;
-  final NumberFormat fmt;
-  final VoidCallback onTap;
-  const _CarryoverOrAddBtn({this.carryover, required this.fmt, required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    if (carryover != null && carryover! > 0.005) {
-      return Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
-        Text(fmt.format(carryover!)),
-        const Text('Prev Week', style: TextStyle(color: _kSubtext, fontSize: 10)),
-      ]);
-    }
-    return _AddBtn(onTap: onTap);
-  }
 }
 
 class _AddBtn extends StatelessWidget {
