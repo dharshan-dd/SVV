@@ -79,137 +79,195 @@ class _WeeklyDashboardScreenState extends ConsumerState<WeeklyDashboardScreen>
   @override
   Widget build(BuildContext context) {
     final fmt = NumberFormat.simpleCurrency(locale: 'en_IN', decimalDigits: 2);
-    return Scaffold(
-      backgroundColor: _kBg,
-      drawer: const AppDrawer(),
-      body: Stack(
-        children: [
-          FadeTransition(
-            opacity: _fadeAnim,
-            child: CustomScrollView(slivers: [
-              _buildAppBar(),
-              SliverToBoxAdapter(
-                child: FutureBuilder<List<DailyCashRecord>>(
-                  future: _recordsFuture,
-                  builder: (context, snap) {
-                    if (snap.connectionState == ConnectionState.waiting) {
-                      return _buildLoading();
-                    }
-                    if (snap.hasError) return _buildError(snap.error);
-
-                    final records = snap.data ?? [];
-                    final sortedByUpdated = [...records]
-                      ..sort((a, b) => a.updatedAt.compareTo(b.updatedAt));
-
-                    final currentWeekRecords = sortedByUpdated.where((r) =>
-                        !r.entryDate.isBefore(weekStart) && !r.entryDate.isAfter(weekEnd)
-                    ).toList();
-
-                    final latestPerBag = <String, DailyCashRecord>{};
-                    for (final r in sortedByUpdated) {
-                      if (!r.entryDate.isBefore(weekStart) && !r.entryDate.isAfter(weekEnd)) {
-                        latestPerBag[r.bagId] = r;
-                      }
-                    }
-                    final weekFinal = latestPerBag.values.fold(
-                      0.0,
-                      (s, r) => s + r.finalAmount,
-                    );
-
-                    final totalCollected = currentWeekRecords.fold(0.0, (s, r) => s + r.collectedAmount);
-                    final totalAdditionalCollection = currentWeekRecords.fold(0.0, (s, r) => s + r.additionalCollection);
-                    final totalExpense = currentWeekRecords.fold(0.0, (s, r) => s + r.expense);
-                    final totalGiven = currentWeekRecords.fold(0.0, (s, r) => s + r.adapAmount);
-                    final totalGpay = currentWeekRecords.fold(0.0, (s, r) => s + r.rrGpayAmount);
-                    final totalExtraNet = currentWeekRecords.fold(0.0, (s, r) => s + r.extraNetAmount);
-
-                    final currentWeekDates = <String>{};
-                    final recordsByDate = <String, List<DailyCashRecord>>{};
-                    for (final r in currentWeekRecords) {
-                      final key = DateFormat('yyyy-MM-dd').format(r.entryDate);
-                      currentWeekDates.add(key);
-                      recordsByDate.putIfAbsent(key, () => []).add(r);
-                    }
-                    final daysRecorded = currentWeekDates.length;
-
-                    final lastWeekByDate = <String, List<DailyCashRecord>>{};
-                    for (int i = 0; i < 7; i++) {
-                      final date = weekStart.add(Duration(days: i));
-                      final key = DateFormat('yyyy-MM-dd').format(date);
-                      if (!currentWeekDates.contains(key)) {
-                        final lastWeekDate = date.subtract(const Duration(days: 7));
-                        final lastKey = DateFormat('yyyy-MM-dd').format(lastWeekDate);
-                        final lastWeekRecordsForDay = sortedByUpdated.where((r) =>
-                          DateFormat('yyyy-MM-dd').format(r.entryDate) == lastKey
-                        ).toList();
-                        if (lastWeekRecordsForDay.isNotEmpty) {
-                          lastWeekByDate[key] = lastWeekRecordsForDay;
-                        }
-                      }
-                    }
-
-                     return Padding(
-                       padding: const EdgeInsets.fromLTRB(16, 0, 16, 40),
-                       child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-                         const SizedBox(height: 16),
-                         _weekNav(),
-                         const SizedBox(height: 16),
-                         _buildBagFilter(fmt),
-                         const SizedBox(height: 16),
-                          _summaryRow(fmt, weekFinal, totalCollected, totalAdditionalCollection, totalExpense, totalGiven, totalGpay, totalExtraNet, daysRecorded),
-                            const SizedBox(height: 24),
-                            _netAmountDashboard(sortedByUpdated, fmt),
-                          if (_selectedBagIds.isNotEmpty) ...[
-                           const SizedBox(height: 24),
-                           _perBagAnalysis(currentWeekRecords, fmt),
-                         ],
-                        const SizedBox(height: 24),
-                        _sectionLabel('Day Records'),
-                        const SizedBox(height: 12),
-                        for (int i = 0; i < 7; i++) ...[
-                          Builder(builder: (_) {
-                            final date = weekStart.add(Duration(days: i));
-                            final key = DateFormat('yyyy-MM-dd').format(date);
-                            final dayRecords = lastWeekByDate[key] ?? recordsByDate[key] ?? const [];
-                            return _DayCard(
-                              date: date,
-                              records: dayRecords,
-                              isLastWeek: lastWeekByDate.containsKey(key),
-                              fmt: fmt,
-                               onTap: () async {
-                                final dateStr = DateFormat('yyyy-MM-dd').format(date);
-                                final recs = dayRecords;
-                                if (recs.isNotEmpty) {
-                                  final r0 = recs.first;
-                                  await context.push('/day-record-entry?date=$dateStr&regionId=${r0.regionId}&modelId=${r0.modelId}&bagId=${r0.bagId}');
-                                } else {
-                                  await context.push('/day-record-entry?date=$dateStr');
-                                }
-                                if (mounted) setState(() => _loadRecords());
-                              },
-                            );
-                          }),
-                        ],
-                      ]),
-                    );
-                  })),
-            ]),
+    return DefaultTabController(
+      length: 2,
+      child: Scaffold(
+        backgroundColor: _kBg,
+        drawer: const AppDrawer(),
+        appBar: AppBar(
+          backgroundColor: _kSurface,
+          foregroundColor: _kText,
+          elevation: 0,
+          title: const Text('Weekly Dashboard', style: TextStyle(color: _kText, fontWeight: FontWeight.w700, fontSize: 18)),
+          bottom: TabBar(
+            indicatorColor: _kPrimary,
+            labelColor: _kPrimary,
+            unselectedLabelColor: _kSubtext,
+            labelStyle: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+            unselectedLabelStyle: const TextStyle(fontSize: 13),
+            tabs: const [
+              Tab(text: 'Weekly'),
+              Tab(text: 'Net'),
+            ],
           ),
-          Positioned(
-            right: 16,
-            bottom: 16,
-            child: FloatingActionButton.extended(
-              heroTag: 'addWeeklyRecord',
-              onPressed: _showAddRecordDialog,
-              icon: const Icon(Icons.add_rounded, color: _kText),
-              label: const Text('Record', style: TextStyle(color: _kText, fontSize: 13, fontWeight: FontWeight.w600)),
-              backgroundColor: _kPrimary,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.refresh_rounded, color: _kSubtext),
+              onPressed: () => setState(() { _loadRecords(); _animCtrl.forward(from: 0); }),
             ),
-          ),
-        ],
+          ],
+        ),
+        body: Stack(
+          children: [
+            FadeTransition(
+              opacity: _fadeAnim,
+              child: TabBarView(
+                children: [
+                  _buildWeeklyTab(context, fmt),
+                  _buildNetTab(context, fmt),
+                ],
+              ),
+            ),
+            Positioned(
+              right: 16,
+              bottom: 16,
+              child: FloatingActionButton.extended(
+                heroTag: 'addWeeklyRecord',
+                onPressed: _showAddRecordDialog,
+                icon: const Icon(Icons.add_rounded, color: _kText),
+                label: const Text('Record', style: TextStyle(color: _kText, fontSize: 13, fontWeight: FontWeight.w600)),
+                backgroundColor: _kPrimary,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+            ),
+          ],
+        ),
       ),
     );
+  }
+
+  Widget _buildWeeklyTab(BuildContext context, NumberFormat fmt) {
+    return CustomScrollView(slivers: [
+      SliverToBoxAdapter(
+        child: FutureBuilder<List<DailyCashRecord>>(
+          future: _recordsFuture,
+          builder: (context, snap) {
+            if (snap.connectionState == ConnectionState.waiting) return _buildLoading();
+            if (snap.hasError) return _buildError(snap.error);
+
+            final records = snap.data ?? [];
+            final sortedByUpdated = [...records]
+              ..sort((a, b) => a.updatedAt.compareTo(b.updatedAt));
+
+            final currentWeekRecords = sortedByUpdated.where((r) =>
+                !r.entryDate.isBefore(weekStart) && !r.entryDate.isAfter(weekEnd)
+            ).toList();
+
+            final latestPerBag = <String, DailyCashRecord>{};
+            for (final r in sortedByUpdated) {
+              if (!r.entryDate.isBefore(weekStart) && !r.entryDate.isAfter(weekEnd)) {
+                latestPerBag[r.bagId] = r;
+              }
+            }
+            final weekFinal = latestPerBag.values.fold(0.0, (s, r) => s + r.finalAmount);
+
+            final totalCollected = currentWeekRecords.fold(0.0, (s, r) => s + r.collectedAmount);
+            final totalAdditionalCollection = currentWeekRecords.fold(0.0, (s, r) => s + r.additionalCollection);
+            final totalExpense = currentWeekRecords.fold(0.0, (s, r) => s + r.expense);
+            final totalGiven = currentWeekRecords.fold(0.0, (s, r) => s + r.adapAmount);
+            final totalGpay = currentWeekRecords.fold(0.0, (s, r) => s + r.rrGpayAmount);
+            final totalExtraNet = currentWeekRecords.fold(0.0, (s, r) => s + r.extraNetAmount);
+
+            final currentWeekDates = <String>{};
+            final recordsByDate = <String, List<DailyCashRecord>>{};
+            for (final r in currentWeekRecords) {
+              final key = DateFormat('yyyy-MM-dd').format(r.entryDate);
+              currentWeekDates.add(key);
+              recordsByDate.putIfAbsent(key, () => []).add(r);
+            }
+            final daysRecorded = currentWeekDates.length;
+
+            final lastWeekByDate = <String, List<DailyCashRecord>>{};
+            for (int i = 0; i < 7; i++) {
+              final date = weekStart.add(Duration(days: i));
+              final key = DateFormat('yyyy-MM-dd').format(date);
+              if (!currentWeekDates.contains(key)) {
+                final lastWeekDate = date.subtract(const Duration(days: 7));
+                final lastKey = DateFormat('yyyy-MM-dd').format(lastWeekDate);
+                final lastWeekRecordsForDay = sortedByUpdated.where((r) =>
+                  DateFormat('yyyy-MM-dd').format(r.entryDate) == lastKey
+                ).toList();
+                if (lastWeekRecordsForDay.isNotEmpty) {
+                  lastWeekByDate[key] = lastWeekRecordsForDay;
+                }
+              }
+            }
+
+            return Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 40),
+              child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+                const SizedBox(height: 16),
+                _summaryRow(fmt, weekFinal, totalCollected, totalAdditionalCollection, totalExpense, totalGiven, totalGpay, totalExtraNet, daysRecorded),
+                const SizedBox(height: 24),
+                _weekNav(),
+                const SizedBox(height: 16),
+                _buildBagFilter(fmt),
+                const SizedBox(height: 16),
+                if (_selectedBagIds.isNotEmpty) ...[
+                  const SizedBox(height: 24),
+                  _perBagAnalysis(currentWeekRecords, fmt),
+                ],
+                const SizedBox(height: 24),
+                _sectionLabel('Day Records'),
+                const SizedBox(height: 12),
+                for (int i = 0; i < 7; i++) ...[
+                  Builder(builder: (_) {
+                    final date = weekStart.add(Duration(days: i));
+                    final key = DateFormat('yyyy-MM-dd').format(date);
+                    final dayRecords = lastWeekByDate[key] ?? recordsByDate[key] ?? const [];
+                    return _DayCard(
+                      date: date,
+                      records: dayRecords,
+                      isLastWeek: lastWeekByDate.containsKey(key),
+                      fmt: fmt,
+                      onTap: () async {
+                        final dateStr = DateFormat('yyyy-MM-dd').format(date);
+                        final recs = dayRecords;
+                        if (recs.isNotEmpty) {
+                          final r0 = recs.first;
+                          await context.push('/day-record-entry?date=$dateStr&regionId=${r0.regionId}&modelId=${r0.modelId}&bagId=${r0.bagId}');
+                        } else {
+                          await context.push('/day-record-entry?date=$dateStr');
+                        }
+                        if (mounted) setState(() => _loadRecords());
+                      },
+                    );
+                  }),
+                ],
+              ]),
+            );
+          }),
+      ),
+    ]);
+  }
+
+  Widget _buildNetTab(BuildContext context, NumberFormat fmt) {
+    return CustomScrollView(slivers: [
+      SliverToBoxAdapter(
+        child: FutureBuilder<List<DailyCashRecord>>(
+          future: _recordsFuture,
+          builder: (context, snap) {
+            if (snap.connectionState == ConnectionState.waiting) return _buildLoading();
+            if (snap.hasError) return _buildError(snap.error);
+
+            final records = snap.data ?? [];
+            final sortedByUpdated = [...records]
+              ..sort((a, b) => a.updatedAt.compareTo(b.updatedAt));
+
+            return Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 40),
+              child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+                const SizedBox(height: 16),
+                _weekNav(),
+                const SizedBox(height: 16),
+                _buildBagFilter(fmt),
+                const SizedBox(height: 24),
+                _netAmountDashboard(sortedByUpdated, fmt),
+              ]),
+            );
+          }),
+      ),
+    ]);
   }
 
   Widget _buildBagFilter(NumberFormat fmt) {
@@ -406,20 +464,6 @@ class _WeeklyDashboardScreenState extends ConsumerState<WeeklyDashboardScreen>
     ]);
   }
 
-  Widget _buildAppBar() => SliverAppBar(
-    pinned: true,
-    backgroundColor: _kSurface,
-    foregroundColor: _kText,
-    elevation: 0,
-    title: const Text('Weekly Dashboard', style: TextStyle(color: _kText, fontWeight: FontWeight.w700, fontSize: 18)),
-    actions: [
-      IconButton(
-        icon: const Icon(Icons.refresh_rounded, color: _kSubtext),
-        onPressed: () => setState(() { _loadRecords(); _animCtrl.forward(from: 0); }),
-      ),
-    ],
-  );
-
   Widget _weekNav() => Container(
     padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
     decoration: BoxDecoration(color: _kCard, borderRadius: BorderRadius.circular(14), border: Border.all(color: _kBorder)),
@@ -447,6 +491,8 @@ class _WeeklyDashboardScreenState extends ConsumerState<WeeklyDashboardScreen>
     final bagIds = allRecords.map((r) => r.bagId).toSet().toList();
     if (bagIds.isEmpty) return const SizedBox.shrink();
 
+    final svc = ref.read(supabaseServiceProvider);
+
     return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
       _sectionLabel('Net Amount Dashboard'),
       const SizedBox(height: 12),
@@ -471,31 +517,38 @@ class _WeeklyDashboardScreenState extends ConsumerState<WeeklyDashboardScreen>
             final bagNetInHand = bagRecords.fold(0.0, (s, r) => s + r.netAmountInHand);
             final bagCollected = bagRecords.fold(0.0, (s, r) => s + r.collectedAmount);
 
-            return Container(
-              margin: const EdgeInsets.only(bottom: 12),
-              padding: const EdgeInsets.all(14),
-              decoration: BoxDecoration(
-                color: _kCard,
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: _kBorder),
-              ),
-              child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-                Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-                  Text(bagName, style: TextStyle(color: _kText, fontSize: 14, fontWeight: FontWeight.w700)),
-                  IconButton(
-                    icon: Icon(Icons.edit_rounded, color: _kPrimary, size: 18),
-                    onPressed: () => _showNetUpdateDialog(context, bagId, bagName, bagExtraNet, latestRecord, fmt),
+            return FutureBuilder<double>(
+              future: svc.getBagNetAmount(bagId: bagId, onOrBeforeDate: latestRecord.entryDate),
+              builder: (context, snap) {
+                final carriedExtraNet = snap.data ?? bagExtraNet;
+                final effectiveBagFinal = bagFinal + (carriedExtraNet - bagExtraNet);
+                return Container(
+                  margin: const EdgeInsets.only(bottom: 12),
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: _kCard,
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: _kBorder),
                   ),
-                ]),
-                const SizedBox(height: 8),
-                _MiniTile(label: 'Net In Hand', value: fmt.format(bagFinal), color: bagFinal >= 0 ? _kGreen : _kRed),
-                const SizedBox(height: 6),
-                _MiniTile(label: '+ Extra Net', value: fmt.format(bagExtraNet), color: _kGreen),
-                const SizedBox(height: 6),
-                _MiniTile(label: 'Total Collected', value: fmt.format(bagCollected), color: _kPrimary),
-                const SizedBox(height: 6),
-                _MiniTile(label: 'Net Amount', value: fmt.format(bagNetInHand), color: bagNetInHand >= 0 ? _kGreen : _kRed),
-              ]),
+                  child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+                    Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+                      Text(bagName, style: TextStyle(color: _kText, fontSize: 14, fontWeight: FontWeight.w700)),
+                      IconButton(
+                        icon: Icon(Icons.edit_rounded, color: _kPrimary, size: 18),
+                        onPressed: () => _showNetUpdateDialog(context, bagId, bagName, carriedExtraNet, latestRecord, fmt),
+                      ),
+                    ]),
+                    const SizedBox(height: 8),
+                    _MiniTile(label: 'Net In Hand', value: fmt.format(effectiveBagFinal), color: effectiveBagFinal >= 0 ? _kGreen : _kRed),
+                    const SizedBox(height: 6),
+                    _MiniTile(label: '+ Extra Net', value: fmt.format(carriedExtraNet), color: _kGreen),
+                    const SizedBox(height: 6),
+                    _MiniTile(label: 'Total Collected', value: fmt.format(bagCollected), color: _kPrimary),
+                    const SizedBox(height: 6),
+                    _MiniTile(label: 'Net Amount', value: fmt.format(bagNetInHand), color: bagNetInHand >= 0 ? _kGreen : _kRed),
+                  ]),
+                );
+              },
             );
           },
         ),
@@ -532,7 +585,11 @@ class _WeeklyDashboardScreenState extends ConsumerState<WeeklyDashboardScreen>
               final newExtraNet = double.tryParse(controller.text.trim()) ?? 0.0;
               final svc = ref.read(supabaseServiceProvider);
               try {
-                await svc.updateDailyCashRecord(id: latestRecord.id, extraNetAmount: newExtraNet);
+                await svc.upsertBagNetAmount(
+                  bagId: bagId,
+                  entryDate: latestRecord.entryDate,
+                  amount: newExtraNet,
+                );
                 Navigator.pop(dialogCtx);
                 if (mounted) setState(() => _loadRecords());
               } catch (e) {

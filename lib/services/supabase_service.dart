@@ -1113,7 +1113,96 @@ class SupabaseService {
      }
    }
 
-  Future<void> deleteDailyCashRecord(String id) async {
+   Future<void> deleteDailyCashRecord(String id) async {
     await _client.from('daily_cash_records').delete().eq('id', id);
+  }
+
+  Future<void> upsertBagNetAmount({
+    required String bagId,
+    required DateTime entryDate,
+    required double amount,
+  }) async {
+    final dateStr = entryDate.toIso8601String().split('T')[0];
+    try {
+      await _client
+          .from('bag_net_amounts')
+          .upsert({
+            'bag_id': bagId,
+            'entry_date': dateStr,
+            'amount': amount,
+          });
+    } catch (e) {
+      // Fallback: try with extra_net_amount column on daily_cash_records
+      final records = await _client.from('daily_cash_records').select('id').eq('bag_id', bagId).eq('entry_date', dateStr);
+      final list = records as List;
+      if (list.isNotEmpty) {
+        final recordId = (list.first as Map<String, dynamic>)['id'];
+        await _client.from('daily_cash_records').update({'extra_net_amount': amount}).eq('id', recordId);
+      }
+    }
+  }
+
+  Future<double> getBagNetAmount({
+    required String bagId,
+    required DateTime onOrBeforeDate,
+  }) async {
+    final dateStr = onOrBeforeDate.toIso8601String().split('T')[0];
+    // Sum all net amounts for this bag on or before the date
+    double total = 0.0;
+
+    // Try the new table first
+    try {
+      final response = await _client
+          .from('bag_net_amounts')
+          .select('amount')
+          .eq('bag_id', bagId)
+          .lte('entry_date', dateStr);
+      final list = response as List;
+      for (final r in list) {
+        total += (r as Map<String, dynamic>)['amount'] as num? ?? 0.0;
+      }
+      return total;
+    } catch (e) {
+      // Fallback: use extra_net_amount column from daily_cash_records
+      final response = await _client
+          .from('daily_cash_records')
+          .select('extra_net_amount')
+          .eq('bag_id', bagId)
+          .lte('entry_date', dateStr);
+      final list = response as List;
+      for (final r in list) {
+        total += (r as Map<String, dynamic>)['extra_net_amount'] as num? ?? 0.0;
+      }
+      return total;
+    }
+  }
+
+  Future<List<Map<String, dynamic>>> getBagNetAmountHistory({
+    required String bagId,
+    required DateTime startDate,
+    required DateTime endDate,
+  }) async {
+    final startStr = startDate.toIso8601String().split('T')[0];
+    final endStr = endDate.toIso8601String().split('T')[0];
+    try {
+      final response = await _client
+          .from('bag_net_amounts')
+          .select('entry_date,amount,created_at,updated_at')
+          .eq('bag_id', bagId)
+          .gte('entry_date', startStr)
+          .lte('entry_date', endStr)
+          .order('entry_date', ascending: true);
+      return List<Map<String, dynamic>>.from(response as List);
+    } catch (e) {
+      // Fallback: use extra_net_amount column from daily_cash_records
+      final response = await _client
+          .from('daily_cash_records')
+          .select('entry_date,extra_net_amount,updated_at')
+          .eq('bag_id', bagId)
+          .gte('entry_date', startStr)
+          .lte('entry_date', endStr)
+          .order('entry_date', ascending: true);
+      return List<Map<String, dynamic>>.from(response as List);
+    }
   }
 }
