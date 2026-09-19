@@ -999,14 +999,37 @@ class SupabaseService {
        'final_amount': finalAmount,
      };
 
-    final response = await _client
-        .from('daily_cash_records')
-        .insert(data)
-        .select()
-        .single();
+    try {
+      final response = await _client
+          .from('daily_cash_records')
+          .insert(data)
+          .select()
+          .single();
 
-    return DailyCashRecord.fromJson(response as Map<String, dynamic>);
-  }
+      return DailyCashRecord.fromJson(response as Map<String, dynamic>);
+    } catch (e) {
+       final errStr = e.toString();
+       final optionalCols = [
+         'extra_net_amount', 'total_amount', 'final_amount',
+         'additional_collection', 'additional_deduction', 'other_amount',
+         'previous_final_amount',
+       ];
+       bool hasSchemaError = false;
+       for (final col in optionalCols) {
+         if (errStr.contains(col)) {
+           hasSchemaError = true;
+           data.remove(col);
+         }
+       }
+       if (!hasSchemaError) rethrow;
+       final response = await _client
+           .from('daily_cash_records')
+           .insert(data)
+           .select()
+           .single();
+        return DailyCashRecord.fromJson(response as Map<String, dynamic>);
+      }
+    }
 
   Future<DailyCashRecord> updateDailyCashRecord({
     required String id,
@@ -1055,15 +1078,42 @@ class SupabaseService {
      if (totalAmount != null) data['total_amount'] = totalAmount;
      if (finalAmount != null) data['final_amount'] = finalAmount;
 
-    final response = await _client
-        .from('daily_cash_records')
-        .update(data)
-        .eq('id', id)
-        .select()
-        .single();
+     if (data.isEmpty) {
+       throw Exception('No fields to update');
+     }
 
-    return DailyCashRecord.fromJson(response as Map<String, dynamic>);
-  }
+     try {
+       final response = await _client
+           .from('daily_cash_records')
+           .update(data)
+           .eq('id', id)
+           .select()
+           .single();
+       return DailyCashRecord.fromJson(response as Map<String, dynamic>);
+     } catch (e) {
+       final errStr = e.toString();
+       final optionalCols = [
+         'extra_net_amount', 'total_amount', 'final_amount',
+         'additional_collection', 'additional_deduction', 'other_amount',
+         'previous_final_amount',
+       ];
+       bool hasSchemaError = false;
+       for (final col in optionalCols) {
+         if (errStr.contains(col)) {
+           hasSchemaError = true;
+           data.remove(col);
+         }
+       }
+       if (!hasSchemaError) rethrow;
+       final response = await _client
+           .from('daily_cash_records')
+           .update(data)
+           .eq('id', id)
+           .select()
+           .single();
+       return DailyCashRecord.fromJson(response as Map<String, dynamic>);
+     }
+   }
 
   Future<void> deleteDailyCashRecord(String id) async {
     await _client.from('daily_cash_records').delete().eq('id', id);
