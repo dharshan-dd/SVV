@@ -195,7 +195,7 @@ class _DayRecordEntryScreenState extends ConsumerState<DayRecordEntryScreen>
               if (dc != 0) return dc;
               return b.updatedAt.compareTo(a.updatedAt);
             });
-          opening = sorted.first.finalAmount;
+          opening = sorted.first.previousFinalAmount + sorted.first.finalAmount;
         }
       } catch (_) {
         opening = 0.0;
