@@ -195,7 +195,13 @@ class _DayRecordEntryScreenState extends ConsumerState<DayRecordEntryScreen>
               if (dc != 0) return dc;
               return b.updatedAt.compareTo(a.updatedAt);
             });
-          opening = sorted.first.previousFinalAmount + sorted.first.finalAmount;
+          // Get the record with the latest entry date before _entryDate
+          final beforeRecords = sorted.where((r) => r.entryDate.isBefore(_entryDate)).toList();
+          if (beforeRecords.isNotEmpty) {
+            opening = beforeRecords.first.finalAmount;
+          } else if (sorted.isNotEmpty) {
+            opening = sorted.first.finalAmount;
+          }
         }
       } catch (_) {
         opening = 0.0;
