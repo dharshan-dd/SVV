@@ -1132,22 +1132,21 @@ class SupabaseService {
             'amount': amount,
           });
     } catch (e) {
-      // Fallback: try with extra_net_amount column on daily_cash_records
+      // Fallback: use other_amount column on daily_cash_records
       final records = await _client.from('daily_cash_records').select('id').eq('bag_id', bagId).eq('entry_date', dateStr);
       final list = records as List;
       if (list.isNotEmpty) {
         final recordId = (list.first as Map<String, dynamic>)['id'];
-        await _client.from('daily_cash_records').update({'extra_net_amount': amount}).eq('id', recordId);
+        await _client.from('daily_cash_records').update({'other_amount': amount}).eq('id', recordId);
       }
     }
   }
 
-  Future<double> getBagNetAmount({
+   Future<double> getBagNetAmount({
     required String bagId,
     required DateTime onOrBeforeDate,
   }) async {
     final dateStr = onOrBeforeDate.toIso8601String().split('T')[0];
-    // Sum all net amounts for this bag on or before the date
     double total = 0.0;
 
     // Try the new table first
@@ -1163,17 +1162,31 @@ class SupabaseService {
       }
       return total;
     } catch (e) {
-      // Fallback: use extra_net_amount column from daily_cash_records
-      final response = await _client
-          .from('daily_cash_records')
-          .select('extra_net_amount')
-          .eq('bag_id', bagId)
-          .lte('entry_date', dateStr);
-      final list = response as List;
-      for (final r in list) {
-        total += (r as Map<String, dynamic>)['extra_net_amount'] as num? ?? 0.0;
+      // Fallback: use other_amount column from daily_cash_records
+      try {
+        final response = await _client
+            .from('daily_cash_records')
+            .select('other_amount')
+            .eq('bag_id', bagId)
+            .lte('entry_date', dateStr);
+        final list = response as List;
+        for (final r in list) {
+          total += ((r as Map<String, dynamic>)['other_amount'] as num?)?.toDouble() ?? 0.0;
+        }
+        return total;
+      } catch (e2) {
+        // Final fallback: use extra_net_amount column from daily_cash_records
+        final response = await _client
+            .from('daily_cash_records')
+            .select('extra_net_amount')
+            .eq('bag_id', bagId)
+            .lte('entry_date', dateStr);
+        final list = response as List;
+        for (final r in list) {
+          total += ((r as Map<String, dynamic>)['extra_net_amount'] as num?)?.toDouble() ?? 0.0;
+        }
+        return total;
       }
-      return total;
     }
   }
 
@@ -1194,10 +1207,10 @@ class SupabaseService {
           .order('entry_date', ascending: true);
       return List<Map<String, dynamic>>.from(response as List);
     } catch (e) {
-      // Fallback: use extra_net_amount column from daily_cash_records
+      // Fallback: use other_amount column from daily_cash_records
       final response = await _client
           .from('daily_cash_records')
-          .select('entry_date,extra_net_amount,updated_at')
+          .select('entry_date,other_amount,updated_at')
           .eq('bag_id', bagId)
           .gte('entry_date', startStr)
           .lte('entry_date', endStr)

@@ -555,7 +555,7 @@ class _WeeklyDashboardScreenState extends ConsumerState<WeeklyDashboardScreen>
     ]);
   }
 
-  void _showNetUpdateDialog(BuildContext ctx, String bagId, String bagName, double currentExtraNet, DailyCashRecord latestRecord, NumberFormat fmt) {
+   void _showNetUpdateDialog(BuildContext ctx, String bagId, String bagName, double currentExtraNet, DailyCashRecord latestRecord, NumberFormat fmt) {
     final controller = TextEditingController(text: currentExtraNet > 0 ? currentExtraNet.toStringAsFixed(2) : '');
     showDialog(
       context: ctx,
@@ -591,9 +591,13 @@ class _WeeklyDashboardScreenState extends ConsumerState<WeeklyDashboardScreen>
                   amount: newExtraNet,
                 );
                 Navigator.pop(dialogCtx);
-                if (mounted) setState(() => _loadRecords());
+                if (mounted) {
+                  setState(() => _loadRecords());
+                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Net amount updated', style: TextStyle(fontWeight: FontWeight.w600)), backgroundColor: _kGreen));
+                }
               } catch (e) {
-                ScaffoldMessenger.of(dialogCtx).showSnackBar(SnackBar(content: Text('$e'), backgroundColor: _kRed));
+                Navigator.pop(dialogCtx);
+                ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e'), backgroundColor: _kRed));
               }
             },
             child: Text('Update', style: TextStyle(color: _kText)),
