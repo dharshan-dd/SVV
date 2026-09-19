@@ -491,8 +491,6 @@ class _WeeklyDashboardScreenState extends ConsumerState<WeeklyDashboardScreen>
     final bagIds = allRecords.map((r) => r.bagId).toSet().toList();
     if (bagIds.isEmpty) return const SizedBox.shrink();
 
-    final svc = ref.read(supabaseServiceProvider);
-
     return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
       _sectionLabel('Net Amount Dashboard'),
       const SizedBox(height: 12),
@@ -517,38 +515,31 @@ class _WeeklyDashboardScreenState extends ConsumerState<WeeklyDashboardScreen>
             final bagNetInHand = bagRecords.fold(0.0, (s, r) => s + r.netAmountInHand);
             final bagCollected = bagRecords.fold(0.0, (s, r) => s + r.collectedAmount);
 
-            return FutureBuilder<double>(
-              future: svc.getBagNetAmount(bagId: bagId, onOrBeforeDate: latestRecord.entryDate),
-              builder: (context, snap) {
-                final carriedExtraNet = snap.data ?? bagNetAmount;
-                final effectiveBagFinal = bagFinal;
-                return Container(
-                  margin: const EdgeInsets.only(bottom: 12),
-                  padding: const EdgeInsets.all(14),
-                  decoration: BoxDecoration(
-                    color: _kCard,
-                    borderRadius: BorderRadius.circular(14),
-                    border: Border.all(color: _kBorder),
+            return Container(
+              margin: const EdgeInsets.only(bottom: 12),
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: _kCard,
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: _kBorder),
+              ),
+              child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+                Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+                  Text(bagName, style: TextStyle(color: _kText, fontSize: 14, fontWeight: FontWeight.w700)),
+                  IconButton(
+                    icon: Icon(Icons.edit_rounded, color: _kPrimary, size: 18),
+                    onPressed: () => _showNetUpdateDialog(context, bagId, bagName, bagNetAmount, latestRecord, fmt),
                   ),
-                  child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-                    Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-                      Text(bagName, style: TextStyle(color: _kText, fontSize: 14, fontWeight: FontWeight.w700)),
-                      IconButton(
-                        icon: Icon(Icons.edit_rounded, color: _kPrimary, size: 18),
-                        onPressed: () => _showNetUpdateDialog(context, bagId, bagName, carriedExtraNet, latestRecord, fmt),
-                      ),
-                    ]),
-                    const SizedBox(height: 8),
-                    _MiniTile(label: 'Net In Hand', value: fmt.format(effectiveBagFinal), color: effectiveBagFinal >= 0 ? _kGreen : _kRed),
-                    const SizedBox(height: 6),
-                    _MiniTile(label: '+ Net Amount', value: fmt.format(carriedExtraNet), color: _kGreen),
-                    const SizedBox(height: 6),
-                    _MiniTile(label: 'Total Collected', value: fmt.format(bagCollected), color: _kPrimary),
-                    const SizedBox(height: 6),
-                    _MiniTile(label: 'Net Amount', value: fmt.format(bagNetInHand), color: bagNetInHand >= 0 ? _kGreen : _kRed),
-                  ]),
-                );
-              },
+                ]),
+                const SizedBox(height: 8),
+                _MiniTile(label: 'Net In Hand', value: fmt.format(bagFinal), color: bagFinal >= 0 ? _kGreen : _kRed),
+                const SizedBox(height: 6),
+                _MiniTile(label: '+ Net Amount', value: fmt.format(bagNetAmount), color: _kGreen),
+                const SizedBox(height: 6),
+                _MiniTile(label: 'Total Collected', value: fmt.format(bagCollected), color: _kPrimary),
+                const SizedBox(height: 6),
+                _MiniTile(label: 'Net Amount', value: fmt.format(bagNetInHand), color: bagNetInHand >= 0 ? _kGreen : _kRed),
+              ]),
             );
           },
         ),
