@@ -156,8 +156,9 @@ class _WeeklyDashboardScreenState extends ConsumerState<WeeklyDashboardScreen>
                          const SizedBox(height: 16),
                          _buildBagFilter(fmt),
                          const SizedBox(height: 16),
-                           _summaryRow(fmt, weekFinal, totalCollected, totalAdditionalCollection, totalExpense, totalGiven, totalGpay, totalExtraNet, daysRecorded),
-                         if (_selectedBagIds.isNotEmpty) ...[
+                          _summaryRow(fmt, weekFinal, totalCollected, totalAdditionalCollection, totalExpense, totalGiven, totalGpay, totalExtraNet, daysRecorded),
+                            _perBagNetSummary(sortedByUpdated, fmt),
+                          if (_selectedBagIds.isNotEmpty) ...[
                            const SizedBox(height: 24),
                            _perBagAnalysis(currentWeekRecords, fmt),
                          ],
@@ -439,6 +440,54 @@ class _WeeklyDashboardScreenState extends ConsumerState<WeeklyDashboardScreen>
   int _weekNumber(DateTime d) {
     final startOfYear = DateTime(d.year, 1, 1);
     return ((d.difference(startOfYear).inDays + startOfYear.weekday) / 7).ceil();
+  }
+
+  Widget _perBagNetSummary(List<DailyCashRecord> allRecords, NumberFormat fmt) {
+    final bagIds = allRecords.map((r) => r.bagId).toSet().toList();
+    if (bagIds.isEmpty) return const SizedBox.shrink();
+
+    return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+      _sectionLabel('Net Amount by Bag'),
+      const SizedBox(height: 12),
+      for (final bagId in bagIds)
+        FutureBuilder<String>(
+          future: _getBagName(bagId),
+          builder: (context, nameSnap) {
+            final bagName = nameSnap.data ?? 'Bag';
+            final bagRecords = allRecords.where((r) => r.bagId == bagId).toList()
+              ..sort((a, b) => a.entryDate.compareTo(b.entryDate));
+            if (bagRecords.isEmpty) {
+              return Container(
+                margin: const EdgeInsets.only(bottom: 10),
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(color: _kCard, borderRadius: BorderRadius.circular(12), border: Border.all(color: _kBorder)),
+                child: Text('$bagName: No records', style: TextStyle(color: _kSubtext, fontSize: 12)),
+              );
+            }
+            final latestRecord = bagRecords.last;
+            final bagFinal = latestRecord.finalAmount;
+            final bagExtraNet = bagRecords.fold(0.0, (s, r) => s + r.extraNetAmount);
+
+            return Container(
+              margin: const EdgeInsets.only(bottom: 10),
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: _kCard,
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: _kBorder),
+              ),
+              child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+                Text(bagName, style: TextStyle(color: _kText, fontSize: 14, fontWeight: FontWeight.w700)),
+                const SizedBox(height: 10),
+                Row(mainAxisAlignment: MainAxisAlignment.spaceAround, children: [
+                  _MiniTile(label: 'Net In Hand', value: fmt.format(bagFinal), color: bagFinal >= 0 ? _kGreen : _kRed),
+                  _MiniTile(label: '+ Extra Net', value: fmt.format(bagExtraNet), color: _kGreen),
+                ]),
+              ]),
+            );
+          },
+        ),
+    ]);
   }
 
   Widget _summaryRow(NumberFormat fmt, double weekFinal, double collected, double additionalCollection, double expense, double given, double gpay, double extraNet, int days) {
@@ -751,7 +800,19 @@ class _AddBtn extends StatelessWidget {
         Icon(Icons.add_rounded, color: _kPrimary, size: 14),
         SizedBox(width: 4),
         Text('Add', style: TextStyle(color: _kPrimary, fontSize: 12, fontWeight: FontWeight.w600)),
-      ]),
+       ]),
     ),
   );
+}
+
+class _MiniTile extends StatelessWidget {
+  final String label, value;
+  final Color color;
+  const _MiniTile({required this.label, required this.value, required this.color});
+  @override
+  Widget build(BuildContext context) => Column(children: [
+    Text(label, style: TextStyle(color: _kSubtext, fontSize: 10)),
+    const SizedBox(height: 2),
+    Text(value, style: TextStyle(color: color, fontSize: 14, fontWeight: FontWeight.w800)),
+  ]);
 }
