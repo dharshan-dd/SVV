@@ -240,7 +240,7 @@ class CollectionCalculationService {
       final dateStr = onOrBeforeDate.toIso8601String().split('T')[0];
       final response = await _client
           .from('daily_cash_records')
-          .select('previous_final_amount!inner,final_amount!inner')
+          .select('previous_final_amount!inner,final_amount!inner,extra_net_amount!inner')
           .eq('bag_id', bagId)
           .lte('entry_date', dateStr)
           .order('entry_date', ascending: false)
@@ -249,7 +249,8 @@ class CollectionCalculationService {
       if (list.isEmpty) return 0.0;
       final row = list.first as Map<String, dynamic>;
       final finalAmount = (row['final_amount'] as num?)?.toDouble() ?? 0.0;
-      return finalAmount;
+      final extraNetAmount = (row['extra_net_amount'] as num?)?.toDouble() ?? 0.0;
+      return finalAmount + extraNetAmount;
     } catch (e) {
       return 0.0;
     }

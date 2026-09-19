@@ -415,6 +415,8 @@ class _RecordDetail extends StatelessWidget {
       adapAmount: record.adapAmount,
       rrGpayAmount: record.rrGpayAmount,
       expense: record.expense,
+      otherAmount: record.otherAmount,
+      extraNetAmount: record.extraNetAmount,
     );
 
     final isPos = (calc['finalAmount'] as double) >= 0;
