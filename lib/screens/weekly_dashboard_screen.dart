@@ -157,7 +157,8 @@ class _WeeklyDashboardScreenState extends ConsumerState<WeeklyDashboardScreen>
                          _buildBagFilter(fmt),
                          const SizedBox(height: 16),
                           _summaryRow(fmt, weekFinal, totalCollected, totalAdditionalCollection, totalExpense, totalGiven, totalGpay, totalExtraNet, daysRecorded),
-                            _perBagNetSummary(sortedByUpdated, fmt),
+                            const SizedBox(height: 24),
+                            _netAmountDashboard(sortedByUpdated, fmt),
                           if (_selectedBagIds.isNotEmpty) ...[
                            const SizedBox(height: 24),
                            _perBagAnalysis(currentWeekRecords, fmt),
@@ -442,12 +443,12 @@ class _WeeklyDashboardScreenState extends ConsumerState<WeeklyDashboardScreen>
     return ((d.difference(startOfYear).inDays + startOfYear.weekday) / 7).ceil();
   }
 
-  Widget _perBagNetSummary(List<DailyCashRecord> allRecords, NumberFormat fmt) {
+  Widget _netAmountDashboard(List<DailyCashRecord> allRecords, NumberFormat fmt) {
     final bagIds = allRecords.map((r) => r.bagId).toSet().toList();
     if (bagIds.isEmpty) return const SizedBox.shrink();
 
     return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-      _sectionLabel('Net Amount by Bag'),
+      _sectionLabel('Net Amount Dashboard'),
       const SizedBox(height: 12),
       for (final bagId in bagIds)
         FutureBuilder<String>(
@@ -467,9 +468,11 @@ class _WeeklyDashboardScreenState extends ConsumerState<WeeklyDashboardScreen>
             final latestRecord = bagRecords.last;
             final bagFinal = latestRecord.finalAmount;
             final bagExtraNet = bagRecords.fold(0.0, (s, r) => s + r.extraNetAmount);
+            final bagNetInHand = bagRecords.fold(0.0, (s, r) => s + r.netAmountInHand);
+            final bagCollected = bagRecords.fold(0.0, (s, r) => s + r.collectedAmount);
 
             return Container(
-              margin: const EdgeInsets.only(bottom: 10),
+              margin: const EdgeInsets.only(bottom: 12),
               padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
                 color: _kCard,
@@ -477,17 +480,70 @@ class _WeeklyDashboardScreenState extends ConsumerState<WeeklyDashboardScreen>
                 border: Border.all(color: _kBorder),
               ),
               child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-                Text(bagName, style: TextStyle(color: _kText, fontSize: 14, fontWeight: FontWeight.w700)),
-                const SizedBox(height: 10),
-                Row(mainAxisAlignment: MainAxisAlignment.spaceAround, children: [
-                  _MiniTile(label: 'Net In Hand', value: fmt.format(bagFinal), color: bagFinal >= 0 ? _kGreen : _kRed),
-                  _MiniTile(label: '+ Extra Net', value: fmt.format(bagExtraNet), color: _kGreen),
+                Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+                  Text(bagName, style: TextStyle(color: _kText, fontSize: 14, fontWeight: FontWeight.w700)),
+                  IconButton(
+                    icon: Icon(Icons.edit_rounded, color: _kPrimary, size: 18),
+                    onPressed: () => _showNetUpdateDialog(context, bagId, bagName, bagExtraNet, latestRecord, fmt),
+                  ),
                 ]),
+                const SizedBox(height: 8),
+                _MiniTile(label: 'Net In Hand', value: fmt.format(bagFinal), color: bagFinal >= 0 ? _kGreen : _kRed),
+                const SizedBox(height: 6),
+                _MiniTile(label: '+ Extra Net', value: fmt.format(bagExtraNet), color: _kGreen),
+                const SizedBox(height: 6),
+                _MiniTile(label: 'Total Collected', value: fmt.format(bagCollected), color: _kPrimary),
+                const SizedBox(height: 6),
+                _MiniTile(label: 'Net Amount', value: fmt.format(bagNetInHand), color: bagNetInHand >= 0 ? _kGreen : _kRed),
               ]),
             );
           },
         ),
     ]);
+  }
+
+  void _showNetUpdateDialog(BuildContext ctx, String bagId, String bagName, double currentExtraNet, DailyCashRecord latestRecord, NumberFormat fmt) {
+    final controller = TextEditingController(text: currentExtraNet > 0 ? currentExtraNet.toStringAsFixed(2) : '');
+    showDialog(
+      context: ctx,
+      builder: (dialogCtx) => AlertDialog(
+        backgroundColor: _kCard,
+        title: Text('Update Extra Net - $bagName', style: TextStyle(color: _kText)),
+        content: Column(mainAxisSize: MainAxisSize.min, children: [
+          Text('Current Extra Net: ${fmt.format(currentExtraNet)}', style: TextStyle(color: _kSubtext, fontSize: 13)),
+          const SizedBox(height: 16),
+          TextField(
+            controller: controller,
+            keyboardType: TextInputType.number,
+            style: TextStyle(color: _kText),
+            decoration: InputDecoration(
+              labelText: 'New Extra Net Amount',
+              labelStyle: TextStyle(color: _kSubtext),
+              border: OutlineInputBorder(borderSide: BorderSide(color: _kBorder)),
+              enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: _kBorder)),
+              focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: _kPrimary)),
+            ),
+          ),
+        ]),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(dialogCtx), child: Text('Cancel', style: TextStyle(color: _kSubtext))),
+          ElevatedButton(
+            onPressed: () async {
+              final newExtraNet = double.tryParse(controller.text.trim()) ?? 0.0;
+              final svc = ref.read(supabaseServiceProvider);
+              try {
+                await svc.updateDailyCashRecord(id: latestRecord.id, extraNetAmount: newExtraNet);
+                Navigator.pop(dialogCtx);
+                if (mounted) setState(() => _loadRecords());
+              } catch (e) {
+                ScaffoldMessenger.of(dialogCtx).showSnackBar(SnackBar(content: Text('$e'), backgroundColor: _kRed));
+              }
+            },
+            child: Text('Update', style: TextStyle(color: _kText)),
+          ),
+        ],
+      ),
+    );
   }
 
   Widget _summaryRow(NumberFormat fmt, double weekFinal, double collected, double additionalCollection, double expense, double given, double gpay, double extraNet, int days) {
