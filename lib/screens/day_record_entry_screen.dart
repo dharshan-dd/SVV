@@ -247,7 +247,6 @@ class _DayRecordEntryScreenState extends ConsumerState<DayRecordEntryScreen>
     }
     if (!_formKey.currentState!.validate()) return;
     setState(() => _submitting = true);
-    final trail = _trail;
     final svc = ref.read(supabaseServiceProvider);
     try {
       // Always upsert: re-check for existing record at submit time
@@ -267,10 +266,8 @@ class _DayRecordEntryScreenState extends ConsumerState<DayRecordEntryScreen>
               otherAmount: _d(_otherCtrl), previousFinalAmount: _prevFinal,
                additionalCollection: _extraCollectionTotal,
                extraNetAmount: _d(_extraNetCtrl),
-               totalAmount: (trail['totalAmount'] as double?) ?? 0.0,
-               finalAmount: (trail['finalAmount'] as double?) ?? 0.0,
             )
-             : await svc.createDailyCashRecord(
+              : await svc.createDailyCashRecord(
                 entryDate: _entryDate, regionId: _selectedRegionId!,
                 modelId: _selectedModelId!, bagId: _selectedBagId!,
                 weekStartDate: _weekStart(_entryDate), dayOfWeek: _entryDate.weekday % 7,
@@ -281,8 +278,6 @@ class _DayRecordEntryScreenState extends ConsumerState<DayRecordEntryScreen>
                 otherAmount: _d(_otherCtrl), previousFinalAmount: _prevFinal,
                 additionalCollection: _extraCollectionTotal,
                 extraNetAmount: _d(_extraNetCtrl),
-                totalAmount: (trail['totalAmount'] as double?) ?? 0.0,
-                finalAmount: (trail['finalAmount'] as double?) ?? 0.0,
             );
 
       if (!mounted) return;

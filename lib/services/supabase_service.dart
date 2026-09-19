@@ -992,12 +992,10 @@ class SupabaseService {
        'expense': expense,
        'additional_collection': additionalCollection,
        'additional_deduction': additionalDeduction,
-       'other_amount': otherAmount,
-       'extra_net_amount': extraNetAmount,
-       'previous_final_amount': previousFinalAmount,
-       'total_amount': totalAmount,
-       'final_amount': finalAmount,
-     };
+        'other_amount': otherAmount,
+        'extra_net_amount': extraNetAmount,
+        'previous_final_amount': previousFinalAmount,
+      };
 
     try {
       final response = await _client
