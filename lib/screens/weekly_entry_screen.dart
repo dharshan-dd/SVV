@@ -763,6 +763,8 @@ class _WeeklyEntryScreenState extends ConsumerState<WeeklyEntryScreen> {
         additionalCollection: _parseAmount(_additionalCollectionController.text),
         additionalDeduction: _parseAmount(_additionalDeductionController.text),
         otherAmount: _parseAmount(_otherAmountController.text),
+        totalAmount: _totalAmount,
+        finalAmount: _finalBalance,
       );
 
       if (mounted) {

@@ -247,6 +247,7 @@ class _DayRecordEntryScreenState extends ConsumerState<DayRecordEntryScreen>
     }
     if (!_formKey.currentState!.validate()) return;
     setState(() => _submitting = true);
+    final trail = _trail;
     final svc = ref.read(supabaseServiceProvider);
     try {
       // Always upsert: re-check for existing record at submit time
@@ -254,7 +255,7 @@ class _DayRecordEntryScreenState extends ConsumerState<DayRecordEntryScreen>
         date: _entryDate, regionId: _selectedRegionId!,
         modelId: _selectedModelId!, bagId: _selectedBagId!,
       );
-      final saved = existing != null
+       final saved = existing != null
           ? await svc.updateDailyCashRecord(
               id: existing.id, entryDate: _entryDate,
               regionId: _selectedRegionId!, modelId: _selectedModelId!, bagId: _selectedBagId!,
@@ -266,19 +267,23 @@ class _DayRecordEntryScreenState extends ConsumerState<DayRecordEntryScreen>
               otherAmount: _d(_otherCtrl), previousFinalAmount: _prevFinal,
                additionalCollection: _extraCollectionTotal,
                extraNetAmount: _d(_extraNetCtrl),
-             )
+               totalAmount: (trail['totalAmount'] as double?) ?? 0.0,
+               finalAmount: (trail['finalAmount'] as double?) ?? 0.0,
+            )
              : await svc.createDailyCashRecord(
-                 entryDate: _entryDate, regionId: _selectedRegionId!,
-                 modelId: _selectedModelId!, bagId: _selectedBagId!,
-                 weekStartDate: _weekStart(_entryDate), dayOfWeek: _entryDate.weekday % 7,
-                 netAmountInHand: _d(_netCtrl), collectedAmount: _d(_collectedCtrl) + _extraCollectionTotal,
-                 remainingAmount: _d(_remainingCtrl), remainingReason: _reasonCtrl.text.trim(),
-                 documentFees: _d(_docFeesCtrl), adapAmount: _d(_adapCtrl),
-                 rrGpayAmount: _d(_gpayCtrl), expense: _d(_expenseCtrl) + _extraExpenseTotal,
-                 otherAmount: _d(_otherCtrl), previousFinalAmount: _prevFinal,
-                 additionalCollection: _extraCollectionTotal,
-                 extraNetAmount: _d(_extraNetCtrl),
-             );
+                entryDate: _entryDate, regionId: _selectedRegionId!,
+                modelId: _selectedModelId!, bagId: _selectedBagId!,
+                weekStartDate: _weekStart(_entryDate), dayOfWeek: _entryDate.weekday % 7,
+                netAmountInHand: _d(_netCtrl), collectedAmount: _d(_collectedCtrl) + _extraCollectionTotal,
+                remainingAmount: _d(_remainingCtrl), remainingReason: _reasonCtrl.text.trim(),
+                documentFees: _d(_docFeesCtrl), adapAmount: _d(_adapCtrl),
+                rrGpayAmount: _d(_gpayCtrl), expense: _d(_expenseCtrl) + _extraExpenseTotal,
+                otherAmount: _d(_otherCtrl), previousFinalAmount: _prevFinal,
+                additionalCollection: _extraCollectionTotal,
+                extraNetAmount: _d(_extraNetCtrl),
+                totalAmount: (trail['totalAmount'] as double?) ?? 0.0,
+                finalAmount: (trail['finalAmount'] as double?) ?? 0.0,
+            );
 
       if (!mounted) return;
       final calc = CollectionCalculationService();
@@ -290,7 +295,7 @@ class _DayRecordEntryScreenState extends ConsumerState<DayRecordEntryScreen>
         _existingRecord = saved;
         _isEditMode = true;
     for (final c in [_netCtrl, _collectedCtrl, _remainingCtrl, _reasonCtrl,
-        _docFeesCtrl, _adapCtrl, _gpayCtrl, _expenseCtrl, _otherCtrl]) {
+        _docFeesCtrl, _adapCtrl, _gpayCtrl, _expenseCtrl, _otherCtrl, _extraNetCtrl]) {
       c.clear();
     }
         _clearDynamicRows();

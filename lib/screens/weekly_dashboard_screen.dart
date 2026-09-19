@@ -174,7 +174,7 @@ class _WeeklyDashboardScreenState extends ConsumerState<WeeklyDashboardScreen>
                               records: dayRecords,
                               isLastWeek: lastWeekByDate.containsKey(key),
                               fmt: fmt,
-                              onTap: () async {
+                               onTap: () async {
                                 final dateStr = DateFormat('yyyy-MM-dd').format(date);
                                 final recs = dayRecords;
                                 if (recs.isNotEmpty) {
@@ -185,9 +185,6 @@ class _WeeklyDashboardScreenState extends ConsumerState<WeeklyDashboardScreen>
                                 }
                                 if (mounted) setState(() => _loadRecords());
                               },
-                              onNetAdd: dayRecords.isNotEmpty
-                                  ? () => _showExtraNetDialog(dayRecords.first)
-                                  : null,
                             );
                           }),
                         ],
@@ -594,65 +591,6 @@ class _WeeklyDashboardScreenState extends ConsumerState<WeeklyDashboardScreen>
       if (mounted) setState(() => _loadRecords());
     }
   }
-
-  void _showExtraNetDialog(DailyCashRecord record) {
-    final ctrl = TextEditingController();
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: _kCard,
-        title: const Text('Add Extra Net', style: TextStyle(color: _kText)),
-        content: Column(mainAxisSize: MainAxisSize.min, children: [
-          Text('Add extra cash to net in hand for ${DateFormat('EEE, d MMM').format(record.entryDate)}',
-              style: const TextStyle(color: _kSubtext, fontSize: 12)),
-          const SizedBox(height: 16),
-          TextField(
-            controller: ctrl,
-            keyboardType: const TextInputType.numberWithOptions(decimal: true),
-            style: const TextStyle(color: _kText),
-            decoration: InputDecoration(
-              labelText: 'Extra Net Amount',
-              labelStyle: const TextStyle(color: _kSubtext),
-              prefixIcon: const Icon(Icons.account_balance_wallet_rounded, color: _kGreen),
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-              filled: true,
-              fillColor: _kSurface,
-            ),
-          ),
-        ]),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel', style: TextStyle(color: _kSubtext))),
-          ElevatedButton(
-            onPressed: () async {
-              final amount = double.tryParse(ctrl.text.trim()) ?? 0.0;
-              if (amount <= 0) return;
-              Navigator.pop(ctx);
-              final svc = ref.read(supabaseServiceProvider);
-              try {
-                await svc.updateDailyCashRecord(
-                  id: record.id,
-                  extraNetAmount: record.extraNetAmount + amount,
-                );
-                if (mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Extra net added: ${NumberFormat.simpleCurrency(locale: 'en_IN', decimalDigits: 2).format(amount)}'), backgroundColor: _kGreen, behavior: SnackBarBehavior.floating),
-                  );
-                  setState(() => _loadRecords());
-                }
-              } catch (e) {
-                if (mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Error: $e'), backgroundColor: _kRed),
-                  );
-                }
-              }
-            },
-            child: const Text('Add', style: TextStyle(color: _kText)),
-          ),
-        ],
-      ),
-    );
-  }
 }
 
 class _NavBtn extends StatelessWidget {
@@ -704,9 +642,8 @@ class _DayCard extends StatefulWidget {
   final List<DailyCashRecord> records;
   final NumberFormat fmt;
   final VoidCallback onTap;
-  final VoidCallback? onNetAdd;
   final bool isLastWeek;
-  const _DayCard({required this.date, required this.records, required this.fmt, required this.onTap, this.onNetAdd, this.isLastWeek = false});
+  const _DayCard({required this.date, required this.records, required this.fmt, required this.onTap, this.isLastWeek = false});
 
   @override
   State<_DayCard> createState() => _DayCardState();
@@ -729,11 +666,6 @@ class _DayCardState extends State<_DayCard> {
           Text(hasRecord ? '${widget.records.length} record${widget.records.length > 1 ? 's' : ''}' : 'No record', style: TextStyle(color: hasRecord ? _kGreen : _kSubtext, fontSize: 12, fontWeight: FontWeight.w600)),
           if (hasRecord && widget.isLastWeek)
             const Padding(padding: EdgeInsets.only(left: 4), child: Text('Last Week', style: TextStyle(color: _kGold, fontSize: 10, fontWeight: FontWeight.w600))),
-          if (hasRecord) ...[
-            const SizedBox(width: 8),
-            if (widget.onNetAdd != null)
-              _NetAddBtn(onTap: widget.onNetAdd!),
-          ],
           if (!hasRecord) ...[
             const SizedBox(width: 8),
             _AddBtn(onTap: widget.onTap),
@@ -799,28 +731,6 @@ class _DetailRow extends StatelessWidget {
       Text(label, style: const TextStyle(color: _kSubtext, fontSize: 12)),
       Text(value, style: TextStyle(color: color, fontSize: 12, fontWeight: FontWeight.w600)),
     ]),
-  );
-}
-
-class _NetAddBtn extends StatelessWidget {
-  final VoidCallback onTap;
-  const _NetAddBtn({required this.onTap});
-  @override
-  Widget build(BuildContext context) => GestureDetector(
-    onTap: onTap,
-    child: Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-      decoration: BoxDecoration(
-        color: _kGreen.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: _kGreen.withValues(alpha: 0.3)),
-      ),
-      child: const Row(mainAxisSize: MainAxisSize.min, children: [
-        Icon(Icons.add_rounded, color: _kGreen, size: 14),
-        SizedBox(width: 4),
-        Text('Net+', style: TextStyle(color: _kGreen, fontSize: 12, fontWeight: FontWeight.w600)),
-      ]),
-    ),
   );
 }
 

@@ -972,28 +972,32 @@ class SupabaseService {
      double otherAmount = 0.0,
      double extraNetAmount = 0.0,
      double previousFinalAmount = 0.0,
-  }) async {
-    final data = {
-      'entry_date': entryDate.toIso8601String().split('T')[0],
-      'region_id': regionId,
-      'model_id': modelId,
-      'bag_id': bagId,
-      'week_start_date': weekStartDate.toIso8601String().split('T')[0],
-      'day_of_week': dayOfWeek,
-      'net_amount_in_hand': netAmountInHand,
-      'collected_amount': collectedAmount,
-      'remaining_amount': remainingAmount,
-      'remaining_reason': remainingReason,
-      'document_fees': documentFees,
-      'adap_amount': adapAmount,
-      'rr_gpay_amount': rrGpayAmount,
-      'expense': expense,
-      'additional_collection': additionalCollection,
-      'additional_deduction': additionalDeduction,
-      'other_amount': otherAmount,
-      'extra_net_amount': extraNetAmount,
-      'previous_final_amount': previousFinalAmount,
-    };
+     double totalAmount = 0.0,
+     double finalAmount = 0.0,
+   }) async {
+     final data = {
+       'entry_date': entryDate.toIso8601String().split('T')[0],
+       'region_id': regionId,
+       'model_id': modelId,
+       'bag_id': bagId,
+       'week_start_date': weekStartDate.toIso8601String().split('T')[0],
+       'day_of_week': dayOfWeek,
+       'net_amount_in_hand': netAmountInHand,
+       'collected_amount': collectedAmount,
+       'remaining_amount': remainingAmount,
+       'remaining_reason': remainingReason,
+       'document_fees': documentFees,
+       'adap_amount': adapAmount,
+       'rr_gpay_amount': rrGpayAmount,
+       'expense': expense,
+       'additional_collection': additionalCollection,
+       'additional_deduction': additionalDeduction,
+       'other_amount': otherAmount,
+       'extra_net_amount': extraNetAmount,
+       'previous_final_amount': previousFinalAmount,
+       'total_amount': totalAmount,
+       'final_amount': finalAmount,
+     };
 
     final response = await _client
         .from('daily_cash_records')
@@ -1025,7 +1029,9 @@ class SupabaseService {
      double? otherAmount,
      double? extraNetAmount,
      double? previousFinalAmount,
-  }) async {
+     double? totalAmount,
+     double? finalAmount,
+   }) async {
     final data = <String, dynamic>{};
     if (entryDate != null) data['entry_date'] = entryDate.toIso8601String().split('T')[0];
     if (regionId != null) data['region_id'] = regionId;
@@ -1044,8 +1050,10 @@ class SupabaseService {
     if (additionalCollection != null) data['additional_collection'] = additionalCollection;
     if (additionalDeduction != null) data['additional_deduction'] = additionalDeduction;
     if (otherAmount != null) data['other_amount'] = otherAmount;
-    if (extraNetAmount != null) data['extra_net_amount'] = extraNetAmount;
-    if (previousFinalAmount != null) data['previous_final_amount'] = previousFinalAmount;
+     if (extraNetAmount != null) data['extra_net_amount'] = extraNetAmount;
+     if (previousFinalAmount != null) data['previous_final_amount'] = previousFinalAmount;
+     if (totalAmount != null) data['total_amount'] = totalAmount;
+     if (finalAmount != null) data['final_amount'] = finalAmount;
 
     final response = await _client
         .from('daily_cash_records')
