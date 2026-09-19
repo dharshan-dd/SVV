@@ -513,15 +513,15 @@ class _WeeklyDashboardScreenState extends ConsumerState<WeeklyDashboardScreen>
             }
             final latestRecord = bagRecords.last;
             final bagFinal = latestRecord.finalAmount;
-            final bagExtraNet = bagRecords.fold(0.0, (s, r) => s + r.extraNetAmount);
+            final bagNetAmount = latestRecord.otherAmount;
             final bagNetInHand = bagRecords.fold(0.0, (s, r) => s + r.netAmountInHand);
             final bagCollected = bagRecords.fold(0.0, (s, r) => s + r.collectedAmount);
 
             return FutureBuilder<double>(
               future: svc.getBagNetAmount(bagId: bagId, onOrBeforeDate: latestRecord.entryDate),
               builder: (context, snap) {
-                final carriedExtraNet = snap.data ?? bagExtraNet;
-                final effectiveBagFinal = bagFinal + (carriedExtraNet - bagExtraNet);
+                final carriedExtraNet = snap.data ?? bagNetAmount;
+                final effectiveBagFinal = bagFinal;
                 return Container(
                   margin: const EdgeInsets.only(bottom: 12),
                   padding: const EdgeInsets.all(14),
@@ -541,7 +541,7 @@ class _WeeklyDashboardScreenState extends ConsumerState<WeeklyDashboardScreen>
                     const SizedBox(height: 8),
                     _MiniTile(label: 'Net In Hand', value: fmt.format(effectiveBagFinal), color: effectiveBagFinal >= 0 ? _kGreen : _kRed),
                     const SizedBox(height: 6),
-                    _MiniTile(label: '+ Extra Net', value: fmt.format(carriedExtraNet), color: _kGreen),
+                    _MiniTile(label: '+ Net Amount', value: fmt.format(carriedExtraNet), color: _kGreen),
                     const SizedBox(height: 6),
                     _MiniTile(label: 'Total Collected', value: fmt.format(bagCollected), color: _kPrimary),
                     const SizedBox(height: 6),

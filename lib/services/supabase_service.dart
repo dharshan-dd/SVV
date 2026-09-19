@@ -1149,43 +1149,42 @@ class SupabaseService {
     final dateStr = onOrBeforeDate.toIso8601String().split('T')[0];
     double total = 0.0;
 
-    // Try the new table first
+    // Get the net amount from the latest record on or before the date
     try {
       final response = await _client
-          .from('bag_net_amounts')
-          .select('amount')
+          .from('daily_cash_records')
+          .select('other_amount,extra_net_amount')
           .eq('bag_id', bagId)
-          .lte('entry_date', dateStr);
+          .lte('entry_date', dateStr)
+          .order('entry_date', ascending: false)
+          .order('updated_at', ascending: false)
+          .limit(1);
       final list = response as List;
-      for (final r in list) {
-        total += (r as Map<String, dynamic>)['amount'] as num? ?? 0.0;
+      if (list.isNotEmpty) {
+        final row = list.first as Map<String, dynamic>;
+        total = ((row['other_amount'] as num?)?.toDouble() ?? 0.0);
+        if (total == 0.0) {
+          total = (row['extra_net_amount'] as num?)?.toDouble() ?? 0.0;
+        }
       }
       return total;
     } catch (e) {
-      // Fallback: use other_amount column from daily_cash_records
+      // Fallback: try bag_net_amounts table
       try {
         final response = await _client
-            .from('daily_cash_records')
-            .select('other_amount')
+            .from('bag_net_amounts')
+            .select('amount')
             .eq('bag_id', bagId)
-            .lte('entry_date', dateStr);
+            .lte('entry_date', dateStr)
+            .order('entry_date', ascending: false)
+            .limit(1);
         final list = response as List;
-        for (final r in list) {
-          total += ((r as Map<String, dynamic>)['other_amount'] as num?)?.toDouble() ?? 0.0;
+        if (list.isNotEmpty) {
+          total = ((list.first as Map<String, dynamic>)['amount'] as num?)?.toDouble() ?? 0.0;
         }
         return total;
       } catch (e2) {
-        // Final fallback: use extra_net_amount column from daily_cash_records
-        final response = await _client
-            .from('daily_cash_records')
-            .select('extra_net_amount')
-            .eq('bag_id', bagId)
-            .lte('entry_date', dateStr);
-        final list = response as List;
-        for (final r in list) {
-          total += ((r as Map<String, dynamic>)['extra_net_amount'] as num?)?.toDouble() ?? 0.0;
-        }
-        return total;
+        return 0.0;
       }
     }
   }
