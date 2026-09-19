@@ -86,7 +86,7 @@ class DailyCashRecord {
       rrGpayAmount: (json['rr_gpay_amount'] as num?)?.toDouble() ?? 0.0,
       amountAfterGpay: (json['amount_after_gpay'] as num?)?.toDouble() ?? 0.0,
       expense: (json['expense'] as num?)?.toDouble() ?? 0.0,
-      finalAmount: (json['final_amount'] as num?)?.toDouble() ?? 0.0,
+      finalAmount: ((json['final_amount'] as num?)?.toDouble() ?? 0.0) + ((json['extra_net_amount'] as num?)?.toDouble() ?? 0.0),
        additionalCollection: (json['additional_collection'] as num?)?.toDouble() ?? 0.0,
        additionalDeduction: (json['additional_deduction'] as num?)?.toDouble() ?? 0.0,
        otherAmount: (json['other_amount'] as num?)?.toDouble() ?? 0.0,

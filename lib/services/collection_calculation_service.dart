@@ -256,6 +256,43 @@ class CollectionCalculationService {
     }
   }
 
+  Future<void> cascadePreviousFinalAmount({
+    required String bagId,
+    required DateTime afterDate,
+    required double extraNetAdjustment,
+  }) async {
+    try {
+      final dateStr = afterDate.toIso8601String().split('T')[0];
+      final response = await _client
+          .from('daily_cash_records')
+          .select('id,previous_final_amount,final_amount')
+          .eq('bag_id', bagId)
+          .gt('entry_date', dateStr)
+          .order('entry_date', ascending: true);
+      final list = response as List;
+      double runningPrevious = 0.0;
+      for (final r in list) {
+        final row = r as Map<String, dynamic>;
+        final recordId = row['id'];
+        final currentPreviousFinal = (row['previous_final_amount'] as num?)?.toDouble() ?? 0.0;
+        final dbFinalAmount = (row['final_amount'] as num?)?.toDouble() ?? 0.0;
+        final newPreviousFinal = runningPrevious;
+        if ((newPreviousFinal - currentPreviousFinal).abs() > 0.001) {
+          await _client
+              .from('daily_cash_records')
+              .update({'previous_final_amount': newPreviousFinal})
+              .eq('id', recordId);
+        } else {
+          runningPrevious = currentPreviousFinal;
+          continue;
+        }
+        runningPrevious = newPreviousFinal + dbFinalAmount;
+      }
+    } catch (e) {
+      // ignore cascade errors silently
+    }
+  }
+
   Map<String, dynamic> calculateDayRecordTrail({
     required double previousFinalAmount,
     required double netAmountInHand,
