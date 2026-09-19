@@ -168,8 +168,8 @@ class _DayRecordEntryScreenState extends ConsumerState<DayRecordEntryScreen>
 
   Future<void> _loadContext() async {
     if (!_ready) return;
-    // For existing record: use stored previous_final_amount (already correct)
-    // For new record: get the latest final_amount from previous records
+    // For existing record: use stored previous_final_amount (carry-forward from all prior records)
+    // For new record: opening = previous_final_amount + final_amount of latest record (includes extra_net/other_amount)
     final svc = ref.read(supabaseServiceProvider);
     DailyCashRecord? existing;
     if (_selectedRegionId != null && _selectedModelId != null) {
