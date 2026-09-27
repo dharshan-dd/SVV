@@ -558,11 +558,28 @@ class _RecordDetailState extends ConsumerState<_RecordDetail> {
                 widget.fmt.format(widget.record.collectedAmount -
                     widget.record.additionalCollection),
                 _kGreen),
-            if (widget.record.additionalCollection > 0)
+            if (widget.record.additionalCollection > 0) ...[
               _calcRow(
                   '+ Additional Collection',
                   widget.fmt.format(widget.record.additionalCollection),
                   _kGold),
+              // Show individual additional collection items with reasons
+              ..._getAdditionalCollectionDetails(widget.record).asMap().entries.map((entry) {
+                final idx = entry.key;
+                final d = entry.value;
+                final displayLabel = d['label'].toString().isNotEmpty
+                    ? d['label']
+                    : 'Collection Amount ${idx + 2}';
+                final reasonText = d['reason'].toString().isNotEmpty
+                    ? ' - ${d['reason']}'
+                    : '';
+                return _calcRow(
+                  '   $displayLabel$reasonText',
+                  widget.fmt.format(d['amount']),
+                  _kGold,
+                );
+              }),
+            ],
             _calcRow('Amount Given', widget.fmt.format(calc['adapAmount']),
                 _kOrange),
             _calcRow('Remaining', widget.fmt.format(calc['remainingAmount']),
@@ -585,12 +602,22 @@ class _RecordDetailState extends ConsumerState<_RecordDetail> {
                   '- Base Expense',
                   '- ${widget.fmt.format(widget.record.expense - widget.record.additionalDeduction)}',
                   _kRed),
-              for (final detail in widget.record.deductionDetails)
-                _calcRow(
-                  '- Extra: ${detail['reason'] ?? 'Additional deduction'}',
-                  '- ${widget.fmt.format((detail['amount'] as num?)?.toDouble() ?? 0)}',
+              // Show individual expense items with reasons
+              ..._getExpenseDetails(widget.record).asMap().entries.map((entry) {
+                final idx = entry.key;
+                final d = entry.value;
+                final displayLabel = d['label'].toString().isNotEmpty
+                    ? d['label']
+                    : 'Expense ${idx + 1}';
+                final reasonText = d['reason'].toString().isNotEmpty
+                    ? ' - ${d['reason']}'
+                    : '';
+                return _calcRow(
+                  '   $displayLabel$reasonText',
+                  '- ${widget.fmt.format(d['amount'])}',
                   _kRed,
-                ),
+                );
+              }),
             ],
             _calcRow('- RR GPay',
                 '- ${widget.fmt.format(calc['rrGpayAmount'])}', _kRed),
@@ -601,6 +628,38 @@ class _RecordDetailState extends ConsumerState<_RecordDetail> {
         ),
       ]),
     );
+  }
+
+  List<Map<String, dynamic>> _getAdditionalCollectionDetails(DailyCashRecord record) {
+    final details = <Map<String, dynamic>>[];
+    if (record.deductionDetails.isNotEmpty) {
+      for (final detail in record.deductionDetails) {
+        if (detail['type'] == 'additional_collection') {
+          details.add({
+            'label': detail['label'] ?? '',
+            'amount': (detail['amount'] as num?)?.toDouble() ?? 0.0,
+            'reason': detail['reason'] ?? '',
+          });
+        }
+      }
+    }
+    return details;
+  }
+
+  List<Map<String, dynamic>> _getExpenseDetails(DailyCashRecord record) {
+    final details = <Map<String, dynamic>>[];
+    if (record.deductionDetails.isNotEmpty) {
+      for (final detail in record.deductionDetails) {
+        if (detail['type'] == 'additional_deduction') {
+          details.add({
+            'label': detail['label'] ?? '',
+            'amount': (detail['amount'] as num?)?.toDouble() ?? 0.0,
+            'reason': detail['reason'] ?? '',
+          });
+        }
+      }
+    }
+    return details;
   }
 
   Widget _calcRow(String label, String value, Color color) => Padding(

@@ -123,6 +123,31 @@ class _WeeklyDashboardScreenState extends ConsumerState<WeeklyDashboardScreen>
                     final totalGpay = currentWeekRecords.fold(0.0, (s, r) => s + r.rrGpayAmount);
                     final totalExtraNet = currentWeekRecords.fold(0.0, (s, r) => s + r.extraNetAmount);
 
+                    // Extract additional collection details for the week
+                    final additionalCollectionDetails = <Map<String, dynamic>>[];
+                    final expenseDetails = <Map<String, dynamic>>[];
+                    for (final r in currentWeekRecords) {
+                      if (r.deductionDetails.isNotEmpty) {
+                        for (final detail in r.deductionDetails) {
+                          if (detail['type'] == 'additional_collection') {
+                            additionalCollectionDetails.add({
+                              'date': DateFormat('d MMM').format(r.entryDate),
+                              'label': detail['label'] ?? '',
+                              'amount': (detail['amount'] as num?)?.toDouble() ?? 0.0,
+                              'reason': detail['reason'] ?? '',
+                            });
+                          } else if (detail['type'] == 'additional_deduction') {
+                            expenseDetails.add({
+                              'date': DateFormat('d MMM').format(r.entryDate),
+                              'label': detail['label'] ?? '',
+                              'amount': (detail['amount'] as num?)?.toDouble() ?? 0.0,
+                              'reason': detail['reason'] ?? '',
+                            });
+                          }
+                        }
+                      }
+                    }
+
                     final currentWeekDates = <String>{};
                     final recordsByDate = <String, List<DailyCashRecord>>{};
                     for (final r in currentWeekRecords) {
@@ -157,6 +182,68 @@ class _WeeklyDashboardScreenState extends ConsumerState<WeeklyDashboardScreen>
                          _buildBagFilter(fmt),
                          const SizedBox(height: 16),
                            _summaryRow(fmt, weekFinal, totalCollected, totalAdditionalCollection, totalExpense, totalGiven, totalGpay, totalExtraNet, daysRecorded),
+                        if (additionalCollectionDetails.isNotEmpty) ...[
+                          const SizedBox(height: 16),
+                          const Divider(),
+                          const SizedBox(height: 8),
+                          Text('Additional Collections', style: TextStyle(color: _kText, fontSize: 12, fontWeight: FontWeight.w600)),
+                          const SizedBox(height: 8),
+                          ...additionalCollectionDetails.asMap().entries.map((entry) {
+                            final idx = entry.key;
+                            final d = entry.value;
+                            final displayLabel = d['label'].toString().isNotEmpty
+                                ? d['label']
+                                : 'Collection Amount ${idx + 2}';
+                            final reasonText = d['reason'].toString().isNotEmpty
+                                ? ' - ${d['reason']}'
+                                : '';
+                            return Padding(
+                              padding: const EdgeInsets.only(bottom: 6),
+                              child: Row(
+                                children: [
+                                  Expanded(
+                                    child: Text(
+                                      '${d['date']} - $displayLabel$reasonText',
+                                      style: TextStyle(color: _kSubtext, fontSize: 11),
+                                    ),
+                                  ),
+                                  Text(fmt.format(d['amount']), style: TextStyle(color: _kGold, fontSize: 11, fontWeight: FontWeight.w600)),
+                                ],
+                              ),
+                            );
+                          }),
+                        ],
+                        if (expenseDetails.isNotEmpty) ...[
+                          const SizedBox(height: 16),
+                          const Divider(),
+                          const SizedBox(height: 8),
+                          Text('Additional Expenses', style: TextStyle(color: _kText, fontSize: 12, fontWeight: FontWeight.w600)),
+                          const SizedBox(height: 8),
+                          ...expenseDetails.asMap().entries.map((entry) {
+                            final idx = entry.key;
+                            final d = entry.value;
+                            final displayLabel = d['label'].toString().isNotEmpty
+                                ? d['label']
+                                : 'Expense ${idx + 1}';
+                            final reasonText = d['reason'].toString().isNotEmpty
+                                ? ' - ${d['reason']}'
+                                : '';
+                            return Padding(
+                              padding: const EdgeInsets.only(bottom: 6),
+                              child: Row(
+                                children: [
+                                  Expanded(
+                                    child: Text(
+                                      '${d['date']} - $displayLabel$reasonText',
+                                      style: TextStyle(color: _kSubtext, fontSize: 11),
+                                    ),
+                                  ),
+                                  Text(fmt.format(d['amount']), style: TextStyle(color: _kRed, fontSize: 11, fontWeight: FontWeight.w600)),
+                                ],
+                              ),
+                            );
+                          }),
+                        ],
                          if (_selectedBagIds.isNotEmpty) ...[
                            const SizedBox(height: 24),
                            _perBagAnalysis(currentWeekRecords, fmt),
@@ -385,6 +472,31 @@ Builder(builder: (_) {
             final bagGpay = bagRecords.fold(0.0, (s, r) => s + r.rrGpayAmount);
             final bagExtraNet = bagRecords.fold(0.0, (s, r) => s + r.extraNetAmount);
 
+            // Extract additional collection details for this bag
+            final additionalCollectionDetails = <Map<String, dynamic>>[];
+            final expenseDetails = <Map<String, dynamic>>[];
+            for (final r in bagRecords) {
+              if (r.deductionDetails.isNotEmpty) {
+                for (final detail in r.deductionDetails) {
+                  if (detail['type'] == 'additional_collection') {
+                    additionalCollectionDetails.add({
+                      'date': DateFormat('d MMM').format(r.entryDate),
+                      'label': detail['label'] ?? '',
+                      'amount': (detail['amount'] as num?)?.toDouble() ?? 0.0,
+                      'reason': detail['reason'] ?? '',
+                    });
+                  } else if (detail['type'] == 'additional_deduction') {
+                    expenseDetails.add({
+                      'date': DateFormat('d MMM').format(r.entryDate),
+                      'label': detail['label'] ?? '',
+                      'amount': (detail['amount'] as num?)?.toDouble() ?? 0.0,
+                      'reason': detail['reason'] ?? '',
+                    });
+                  }
+                }
+              }
+            }
+
             return Container(
               margin: const EdgeInsets.only(bottom: 12),
               padding: const EdgeInsets.all(14),
@@ -397,6 +509,68 @@ Builder(builder: (_) {
                 Text(bagName, style: TextStyle(color: _kText, fontSize: 14, fontWeight: FontWeight.w700)),
                 const SizedBox(height: 12),
                 _summaryRow(fmt, bagFinal, bagCollected, bagAdditionalCollection, bagExpense, bagGiven, bagGpay, bagExtraNet, sortedBag.length),
+                if (additionalCollectionDetails.isNotEmpty) ...[
+                  const SizedBox(height: 12),
+                  const Divider(),
+                  const SizedBox(height: 8),
+                  Text('Additional Collections', style: TextStyle(color: _kText, fontSize: 12, fontWeight: FontWeight.w600)),
+                  const SizedBox(height: 8),
+                  ...additionalCollectionDetails.asMap().entries.map((entry) {
+                    final idx = entry.key;
+                    final d = entry.value;
+                    final displayLabel = d['label'].toString().isNotEmpty
+                        ? d['label']
+                        : 'Collection Amount ${idx + 2}';
+                    final reasonText = d['reason'].toString().isNotEmpty
+                        ? ' - ${d['reason']}'
+                        : '';
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 6),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              '$displayLabel$reasonText',
+                              style: TextStyle(color: _kSubtext, fontSize: 11),
+                            ),
+                          ),
+                          Text(fmt.format(d['amount']), style: TextStyle(color: _kGold, fontSize: 11, fontWeight: FontWeight.w600)),
+                        ],
+                      ),
+                    );
+                  }),
+                ],
+                if (expenseDetails.isNotEmpty) ...[
+                  const SizedBox(height: 12),
+                  const Divider(),
+                  const SizedBox(height: 8),
+                  Text('Additional Expenses', style: TextStyle(color: _kText, fontSize: 12, fontWeight: FontWeight.w600)),
+                  const SizedBox(height: 8),
+                  ...expenseDetails.asMap().entries.map((entry) {
+                    final idx = entry.key;
+                    final d = entry.value;
+                    final displayLabel = d['label'].toString().isNotEmpty
+                        ? d['label']
+                        : 'Expense ${idx + 1}';
+                    final reasonText = d['reason'].toString().isNotEmpty
+                        ? ' - ${d['reason']}'
+                        : '';
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 6),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              '$displayLabel$reasonText',
+                              style: TextStyle(color: _kSubtext, fontSize: 11),
+                            ),
+                          ),
+                          Text(fmt.format(d['amount']), style: TextStyle(color: _kRed, fontSize: 11, fontWeight: FontWeight.w600)),
+                        ],
+                      ),
+                    );
+                  }),
+                ],
               ]),
             );
           },

@@ -355,7 +355,20 @@ class _DayRecordEntryScreenState extends ConsumerState<DayRecordEntryScreen>
               previousFinalAmount: _prevFinal,
               additionalCollection: _extraCollectionTotal,
               additionalDeduction: _extraExpenseTotal,
-              deductionDetails: _deductionDetails,
+              deductionDetails: [
+                ..._extraCollections.map((e) => {
+                  'type': 'additional_collection',
+                  'label': e['label'],
+                  'amount': e['amount'],
+                  'reason': e['reason'],
+                }),
+                ..._extraExpenses.map((e) => {
+                  'type': 'additional_deduction',
+                  'label': e['label'],
+                  'amount': e['amount'],
+                  'reason': e['reason'],
+                }),
+              ],
               extraNetAmount: _d(_extraNetCtrl),
             )
           : await svc.createDailyCashRecord(
@@ -376,6 +389,21 @@ class _DayRecordEntryScreenState extends ConsumerState<DayRecordEntryScreen>
               otherAmount: _d(_otherCtrl),
               previousFinalAmount: _prevFinal,
               additionalCollection: _extraCollectionTotal,
+              additionalDeduction: _extraExpenseTotal,
+              deductionDetails: [
+                ..._extraCollections.map((e) => {
+                  'type': 'additional_collection',
+                  'label': e['label'],
+                  'amount': e['amount'],
+                  'reason': e['reason'],
+                }),
+                ..._extraExpenses.map((e) => {
+                  'type': 'additional_deduction',
+                  'label': e['label'],
+                  'amount': e['amount'],
+                  'reason': e['reason'],
+                }),
+              ],
               extraNetAmount: _d(_extraNetCtrl),
             );
 

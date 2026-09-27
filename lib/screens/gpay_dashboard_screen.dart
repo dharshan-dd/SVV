@@ -93,6 +93,11 @@ class _GPayDashboardScreenState extends ConsumerState<GPayDashboardScreen> {
 
                   final weekGPay = weekRecords.fold(0.0, (s, r) => s + r.rrGpayAmount!);
                   final totalGPay = bagRecords.fold(0.0, (s, r) => s + r.rrGpayAmount!);
+
+                  // Track RR GPay as expenses (deductions) per bag
+                  final weekGPayExpense = weekRecords.fold(0.0, (s, r) => s + r.rrGpayAmount!);
+                  final totalGPayExpense = bagRecords.fold(0.0, (s, r) => s + r.rrGpayAmount!);
+
                   final weekCount = weekRecords.length;
                   final totalCount = bagRecords.length;
 
@@ -112,6 +117,8 @@ class _GPayDashboardScreenState extends ConsumerState<GPayDashboardScreen> {
                     regionName: regionName,
                     weekGPay: weekGPay,
                     totalGPay: totalGPay,
+                    weekGPayExpense: weekGPayExpense,
+                    totalGPayExpense: totalGPayExpense,
                     weekCount: weekCount,
                     totalCount: totalCount,
                     lastUpdated: lastUpdated,
@@ -139,6 +146,13 @@ class _GPayDashboardScreenState extends ConsumerState<GPayDashboardScreen> {
                             value: fmt.format(bagData.fold(0.0, (s, d) => s + d.totalGPay)),
                             color: _gPrimary,
                             icon: Icons.account_balance_rounded,
+                          )),
+                          const SizedBox(width: 10),
+                          Expanded(child: _SummaryTile(
+                            label: 'GPay Expense (Week)',
+                            value: fmt.format(bagData.fold(0.0, (s, d) => s + d.weekGPayExpense)),
+                            color: _gRed,
+                            icon: Icons.receipt_rounded,
                           )),
                           const SizedBox(width: 10),
                           Expanded(child: _SummaryTile(
@@ -185,6 +199,8 @@ class BagGPayData {
   final String regionName;
   final double weekGPay;
   final double totalGPay;
+  final double weekGPayExpense;
+  final double totalGPayExpense;
   final int weekCount;
   final int totalCount;
   final DateTime? lastUpdated;
@@ -195,6 +211,8 @@ class BagGPayData {
     required this.regionName,
     required this.weekGPay,
     required this.totalGPay,
+    required this.weekGPayExpense,
+    required this.totalGPayExpense,
     required this.weekCount,
     required this.totalCount,
     required this.lastUpdated,
@@ -281,6 +299,8 @@ class _GPayBagCardState extends ConsumerState<_GPayBagCard> {
                   const SizedBox(height: 10),
                   _statRow('This Week GPay', widget.fmt.format(d.weekGPay), _gGold),
                   _statRow('All Time GPay', widget.fmt.format(d.totalGPay), _gPrimary),
+                  _statRow('GPay Expense (Week)', widget.fmt.format(d.weekGPayExpense), _gRed),
+                  _statRow('GPay Expense (All Time)', widget.fmt.format(d.totalGPayExpense), _gRed),
                   _statRow('This Week Txns', '${d.weekCount}', _gGreen),
                   _statRow('All Time Txns', '${d.totalCount}', _gPurple),
                   _statRow('Last Updated', d.lastUpdated != null
