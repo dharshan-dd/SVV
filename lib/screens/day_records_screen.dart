@@ -261,7 +261,7 @@ class _DayRecordsScreenState extends ConsumerState<DayRecordsScreen>
         itemBuilder: (ctx, i) {
           final r = _records[i];
           final isNeg = r.finalAmount < 0;
-          return _RecordCard(record: r, fmt: fmt, isNeg: isNeg);
+          return _RecordCard(record: r, fmt: fmt, isNeg: isNeg, onEdit: _load);
         },
       ),
     ]);
@@ -323,7 +323,8 @@ class _RecordCard extends StatelessWidget {
   final DailyCashRecord record;
   final NumberFormat fmt;
   final bool isNeg;
-  const _RecordCard({required this.record, required this.fmt, required this.isNeg});
+  final VoidCallback? onEdit;
+  const _RecordCard({required this.record, required this.fmt, required this.isNeg, this.onEdit});
 
   @override
   Widget build(BuildContext context) {
@@ -371,9 +372,10 @@ class _RecordCard extends StatelessWidget {
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton.icon(
-                  onPressed: () {
+                  onPressed: () async {
                     final dateStr = DateFormat('yyyy-MM-dd').format(record.entryDate);
-                    context.go('/day-record-entry?date=$dateStr&regionId=${record.regionId}&modelId=${record.modelId}&bagId=${record.bagId}');
+                    await context.push('/day-record-entry?date=$dateStr&regionId=${record.regionId}&modelId=${record.modelId}&bagId=${record.bagId}');
+                    onEdit?.call();
                   },
                   icon: const Icon(Icons.edit_rounded, size: 16),
                   label: const Text('Edit Record'),

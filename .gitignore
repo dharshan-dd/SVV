@@ -42,3 +42,5 @@ coverage/
 build/flutter_assets/
 build/[0-9a-f]*/
 *.track.dill
+
+.vercel

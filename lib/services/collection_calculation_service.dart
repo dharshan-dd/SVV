@@ -230,27 +230,60 @@ class CollectionCalculationService {
     }
   }
 
-  // Returns the final_amount of the latest record for a bag on or before the given date.
-  // This is used as the opening balance when adding a new record for the same bag.
+  // Returns the final_amount of the latest record for a bag on or before the given date,
+  // including extra_net_amount and other_amount.
+  // This is used as the opening balance when adding/editing a record for the same bag.
   Future<double> getLatestFinalAmount({
     required String bagId,
     required DateTime onOrBeforeDate,
   }) async {
+    final dateStr = onOrBeforeDate.toIso8601String().split('T')[0];
     try {
-      final dateStr = onOrBeforeDate.toIso8601String().split('T')[0];
       final response = await _client
           .from('daily_cash_records')
-          .select('previous_final_amount!inner,final_amount!inner,extra_net_amount!inner')
+          .select()
           .eq('bag_id', bagId)
           .lte('entry_date', dateStr)
           .order('entry_date', ascending: false)
+          .order('updated_at', ascending: false)
           .limit(1);
       final list = response as List;
-      if (list.isEmpty) return 0.0;
-      final row = list.first as Map<String, dynamic>;
-      final finalAmount = (row['final_amount'] as num?)?.toDouble() ?? 0.0;
-      final extraNetAmount = (row['extra_net_amount'] as num?)?.toDouble() ?? 0.0;
-      return finalAmount + extraNetAmount;
+      double amount = 0.0;
+      if (list.isNotEmpty) {
+        final row = list.first as Map<String, dynamic>;
+        final finalAmount = (row['final_amount'] as num?)?.toDouble() ?? 0.0;
+        final extraNetAmount = (row['extra_net_amount'] as num?)?.toDouble() ?? 0.0;
+        final otherAmount = (row['other_amount'] as num?)?.toDouble() ?? 0.0;
+        amount = finalAmount + extraNetAmount + otherAmount;
+      }
+
+      // Also check bag_net_amounts table for manually added net amounts
+      // This is for net amounts added on dates where no daily_cash_record exists
+      // (if a record exists, other_amount on the record already captures it)
+      try {
+        final netResponse = await _client
+            .from('bag_net_amounts')
+            .select('amount,entry_date')
+            .eq('bag_id', bagId)
+            .lte('entry_date', dateStr)
+            .order('entry_date', ascending: false)
+            .limit(1);
+        final netList = netResponse as List;
+        if (netList.isNotEmpty) {
+          final netAmount = ((netList.first as Map<String, dynamic>)['amount'] as num?)?.toDouble() ?? 0.0;
+          // Only add if this is from a different date than our latest record
+          // (to avoid double-counting other_amount already included in the record)
+          final netEntryDate = (netList.first as Map<String, dynamic>)['entry_date'] as String?;
+          final recordEntryDate = list.isNotEmpty ? (list.first as Map<String, dynamic>)['entry_date'] as String? : null;
+          if (netAmount > 0 && netEntryDate != recordEntryDate) {
+            amount += netAmount;
+          }
+        }
+      } catch (e) {
+        // bag_net_amounts table may not exist yet; other_amount already covers it
+      }
+
+      return amount;
     } catch (e) {
       return 0.0;
     }
@@ -305,7 +338,7 @@ class CollectionCalculationService {
     double otherAmount = 0.0,
     double extraNetAmount = 0.0,
   }) {
-    final totalAmount = netAmountInHand + collectedAmount + remainingAmount + documentFees + extraNetAmount;
+    final totalAmount = netAmountInHand + collectedAmount + remainingAmount + documentFees + extraNetAmount + otherAmount;
     final amountAfterAdap = totalAmount - adapAmount;
     final amountAfterGpay = amountAfterAdap - rrGpayAmount;
     final finalAmount = amountAfterGpay - expense;
@@ -324,7 +357,7 @@ class CollectionCalculationService {
       'expense': expense,
       'finalAmount': finalAmount,
       'otherAmount': otherAmount,
-      'extraNetAmount': extraNetAmount,
+      'extra_net_amount': extraNetAmount,
     };
   }
 }

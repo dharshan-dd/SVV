@@ -19,10 +19,8 @@ class SupabaseService {
   // ============================================
 
   Future<List<Region>> getRegions() async {
-    final response = await _client
-        .from('regions')
-        .select()
-        .order('name', ascending: true);
+    final response =
+        await _client.from('regions').select().order('name', ascending: true);
 
     return (response as List)
         .map((json) => Region.fromJson(json as Map<String, dynamic>))
@@ -30,16 +28,14 @@ class SupabaseService {
   }
 
   Future<Region> createRegion({required String name}) async {
-    final response = await _client
-        .from('regions')
-        .insert({'name': name})
-        .select()
-        .single();
+    final response =
+        await _client.from('regions').insert({'name': name}).select().single();
 
     return Region.fromJson(response as Map<String, dynamic>);
   }
 
-  Future<Region> updateRegion({required String id, required String name}) async {
+  Future<Region> updateRegion(
+      {required String id, required String name}) async {
     final response = await _client
         .from('regions')
         .update({'name': name})
@@ -59,10 +55,8 @@ class SupabaseService {
   // ============================================
 
   Future<List<ModelType>> getModels() async {
-    final response = await _client
-        .from('models')
-        .select()
-        .order('name', ascending: true);
+    final response =
+        await _client.from('models').select().order('name', ascending: true);
 
     return (response as List)
         .map((json) => ModelType.fromJson(json as Map<String, dynamic>))
@@ -70,16 +64,14 @@ class SupabaseService {
   }
 
   Future<ModelType> createModel({required String name}) async {
-    final response = await _client
-        .from('models')
-        .insert({'name': name})
-        .select()
-        .single();
+    final response =
+        await _client.from('models').insert({'name': name}).select().single();
 
     return ModelType.fromJson(response as Map<String, dynamic>);
   }
 
-  Future<ModelType> updateModel({required String id, required String name}) async {
+  Future<ModelType> updateModel(
+      {required String id, required String name}) async {
     final response = await _client
         .from('models')
         .update({'name': name})
@@ -189,15 +181,14 @@ class SupabaseService {
       'thursday_amount': thursdayAmount,
       'friday_amount': fridayAmount,
       'saturday_amount': saturdayAmount,
-      'start_date': (startDate ?? DateTime.now()).toIso8601String().split('T')[0],
-      'end_date': (endDate ?? DateTime(2099, 12, 31)).toIso8601String().split('T')[0],
+      'start_date':
+          (startDate ?? DateTime.now()).toIso8601String().split('T')[0],
+      'end_date':
+          (endDate ?? DateTime(2099, 12, 31)).toIso8601String().split('T')[0],
     };
 
-    final response = await _client
-        .from('bag_configurations')
-        .insert(data)
-        .select()
-        .single();
+    final response =
+        await _client.from('bag_configurations').insert(data).select().single();
 
     return BagConfiguration.fromJson(response as Map<String, dynamic>);
   }
@@ -242,8 +233,10 @@ class SupabaseService {
     if (thursdayAmount != null) data['thursday_amount'] = thursdayAmount;
     if (fridayAmount != null) data['friday_amount'] = fridayAmount;
     if (saturdayAmount != null) data['saturday_amount'] = saturdayAmount;
-    if (startDate != null) data['start_date'] = startDate.toIso8601String().split('T')[0];
-    if (endDate != null) data['end_date'] = endDate.toIso8601String().split('T')[0];
+    if (startDate != null)
+      data['start_date'] = startDate.toIso8601String().split('T')[0];
+    if (endDate != null)
+      data['end_date'] = endDate.toIso8601String().split('T')[0];
 
     final response = await _client
         .from('bag_configurations')
@@ -270,9 +263,7 @@ class SupabaseService {
     DateTime? endDate,
     String? status,
   }) async {
-    var query = _client
-        .from('collection_cycles')
-        .select();
+    var query = _client.from('collection_cycles').select();
 
     if (bagConfigurationId != null) {
       query = query.eq('bag_configuration_id', bagConfigurationId);
@@ -281,10 +272,12 @@ class SupabaseService {
       query = query.eq('bag_id', bagId);
     }
     if (startDate != null) {
-      query = query.gte('scheduled_date', startDate.toIso8601String().split('T')[0]);
+      query = query.gte(
+          'scheduled_date', startDate.toIso8601String().split('T')[0]);
     }
     if (endDate != null) {
-      query = query.lte('scheduled_date', endDate.toIso8601String().split('T')[0]);
+      query =
+          query.lte('scheduled_date', endDate.toIso8601String().split('T')[0]);
     }
     if (status != null) {
       query = query.eq('status', status);
@@ -312,11 +305,8 @@ class SupabaseService {
       'previous_cycle_id': previousCycleId,
     };
 
-    final response = await _client
-        .from('collection_cycles')
-        .insert(data)
-        .select()
-        .single();
+    final response =
+        await _client.from('collection_cycles').insert(data).select().single();
 
     return CollectionCycle.fromJson(response as Map<String, dynamic>);
   }
@@ -381,10 +371,12 @@ class SupabaseService {
       query = query.eq('bag_id', bagId);
     }
     if (startDate != null) {
-      query = query.gte('scheduled_date', startDate.toIso8601String().split('T')[0]);
+      query = query.gte(
+          'scheduled_date', startDate.toIso8601String().split('T')[0]);
     }
     if (endDate != null) {
-      query = query.lte('scheduled_date', endDate.toIso8601String().split('T')[0]);
+      query =
+          query.lte('scheduled_date', endDate.toIso8601String().split('T')[0]);
     }
 
     final response = await query.order('scheduled_date', ascending: false);
@@ -402,12 +394,11 @@ class SupabaseService {
     String? modelId,
     String? bagId,
   }) async {
-    var query = _client
-        .from('daily_collection_entries')
-        .select();
+    var query = _client.from('daily_collection_entries').select();
 
     if (startDate != null) {
-      query = query.gte('entry_date', startDate.toIso8601String().split('T')[0]);
+      query =
+          query.gte('entry_date', startDate.toIso8601String().split('T')[0]);
     }
     if (endDate != null) {
       query = query.lte('entry_date', endDate.toIso8601String().split('T')[0]);
@@ -425,7 +416,8 @@ class SupabaseService {
     final response = await query.order('entry_date', ascending: false);
 
     return (response as List)
-        .map((json) => DailyCollectionEntry.fromJson(json as Map<String, dynamic>))
+        .map((json) =>
+            DailyCollectionEntry.fromJson(json as Map<String, dynamic>))
         .toList();
   }
 
@@ -464,8 +456,10 @@ class SupabaseService {
     };
 
     // Only include optional columns if they have values (they may not exist in older schemas)
-    if (bagConfigurationId != null) data['bag_configuration_id'] = bagConfigurationId;
-    if (collectionCycleId != null) data['collection_cycle_id'] = collectionCycleId;
+    if (bagConfigurationId != null)
+      data['bag_configuration_id'] = bagConfigurationId;
+    if (collectionCycleId != null)
+      data['collection_cycle_id'] = collectionCycleId;
     if (expectedAmount != 0.0) data['expected_amount'] = expectedAmount;
     if (previousPending != 0.0) data['previous_pending'] = previousPending;
     if (totalDue != 0.0) data['total_due'] = totalDue;
@@ -522,12 +516,15 @@ class SupabaseService {
     bool? isDeleted,
   }) async {
     final data = <String, dynamic>{};
-    if (entryDate != null) data['entry_date'] = entryDate.toIso8601String().split('T')[0];
+    if (entryDate != null)
+      data['entry_date'] = entryDate.toIso8601String().split('T')[0];
     if (regionId != null) data['region_id'] = regionId;
     if (modelId != null) data['model_id'] = modelId;
     if (bagId != null) data['bag_id'] = bagId;
-    if (bagConfigurationId != null) data['bag_configuration_id'] = bagConfigurationId;
-    if (collectionCycleId != null) data['collection_cycle_id'] = collectionCycleId;
+    if (bagConfigurationId != null)
+      data['bag_configuration_id'] = bagConfigurationId;
+    if (collectionCycleId != null)
+      data['collection_cycle_id'] = collectionCycleId;
     if (expectedAmount != null) data['expected_amount'] = expectedAmount;
     if (previousPending != null) data['previous_pending'] = previousPending;
     if (totalDue != null) data['total_due'] = totalDue;
@@ -552,13 +549,10 @@ class SupabaseService {
   }
 
   Future<void> softDeleteDailyCollectionEntry(String id) async {
-    await _client
-        .from('daily_collection_entries')
-        .update({
-          'is_deleted': true,
-          'deleted_at': DateTime.now().toIso8601String(),
-        })
-        .eq('id', id);
+    await _client.from('daily_collection_entries').update({
+      'is_deleted': true,
+      'deleted_at': DateTime.now().toIso8601String(),
+    }).eq('id', id);
   }
 
   Future<void> deleteDailyCollectionEntry(String id) async {
@@ -575,7 +569,8 @@ class SupabaseService {
     try {
       final response = await _client
           .from('daily_cash_records')
-          .select('final_amount, collected_amount, expense, adap_amount, document_fees, remaining_amount, total_amount')
+          .select(
+              'final_amount, collected_amount, expense, adap_amount, document_fees, remaining_amount, total_amount')
           .eq('entry_date', dateStr);
 
       if (response.isEmpty) {
@@ -622,8 +617,7 @@ class SupabaseService {
     } catch (_) {
       try {
         final response = await _client
-            .rpc('get_daily_summary', params: {'p_date': dateStr})
-            .single();
+            .rpc('get_daily_summary', params: {'p_date': dateStr}).single();
         return response as Map<String, dynamic>;
       } catch (e) {
         return <String, dynamic>{};
@@ -711,15 +705,15 @@ class SupabaseService {
     String? modelId,
     String? bagId,
   }) async {
-    var query = _client
-        .from('weekly_collection_entries')
-        .select();
+    var query = _client.from('weekly_collection_entries').select();
 
     if (startDate != null) {
-      query = query.gte('week_start_date', startDate.toIso8601String().split('T')[0]);
+      query = query.gte(
+          'week_start_date', startDate.toIso8601String().split('T')[0]);
     }
     if (endDate != null) {
-      query = query.lte('week_start_date', endDate.toIso8601String().split('T')[0]);
+      query =
+          query.lte('week_start_date', endDate.toIso8601String().split('T')[0]);
     }
     if (regionId != null) {
       query = query.eq('region_id', regionId);
@@ -790,15 +784,15 @@ class SupabaseService {
     String? modelId,
     String? bagId,
   }) async {
-    var query = _client
-        .from('monthly_collection_entries')
-        .select();
+    var query = _client.from('monthly_collection_entries').select();
 
     if (startDate != null) {
-      query = query.gte('month_start_date', startDate.toIso8601String().split('T')[0]);
+      query = query.gte(
+          'month_start_date', startDate.toIso8601String().split('T')[0]);
     }
     if (endDate != null) {
-      query = query.lte('month_start_date', endDate.toIso8601String().split('T')[0]);
+      query = query.lte(
+          'month_start_date', endDate.toIso8601String().split('T')[0]);
     }
     if (regionId != null) {
       query = query.eq('region_id', regionId);
@@ -907,12 +901,13 @@ class SupabaseService {
     String? bagId,
     List<String>? bagIds,
   }) async {
-    var query = _client
-        .from('daily_cash_records')
-        .select();
+    var query = _client.from('daily_cash_records').select();
 
-    if (startDate != null) query = query.gte('entry_date', startDate.toIso8601String().split('T')[0]);
-    if (endDate != null) query = query.lte('entry_date', endDate.toIso8601String().split('T')[0]);
+    if (startDate != null)
+      query =
+          query.gte('entry_date', startDate.toIso8601String().split('T')[0]);
+    if (endDate != null)
+      query = query.lte('entry_date', endDate.toIso8601String().split('T')[0]);
     if (regionId != null) query = query.eq('region_id', regionId);
     if (modelId != null) query = query.eq('model_id', modelId);
     if (bagId != null) query = query.eq('bag_id', bagId);
@@ -967,35 +962,37 @@ class SupabaseService {
     double adapAmount = 0.0,
     double rrGpayAmount = 0.0,
     double expense = 0.0,
-     double additionalCollection = 0.0,
-     double additionalDeduction = 0.0,
-     double otherAmount = 0.0,
-     double extraNetAmount = 0.0,
-     double previousFinalAmount = 0.0,
-     double totalAmount = 0.0,
-     double finalAmount = 0.0,
-   }) async {
-     final data = {
-       'entry_date': entryDate.toIso8601String().split('T')[0],
-       'region_id': regionId,
-       'model_id': modelId,
-       'bag_id': bagId,
-       'week_start_date': weekStartDate.toIso8601String().split('T')[0],
-       'day_of_week': dayOfWeek,
-       'net_amount_in_hand': netAmountInHand,
-       'collected_amount': collectedAmount,
-       'remaining_amount': remainingAmount,
-       'remaining_reason': remainingReason,
-       'document_fees': documentFees,
-       'adap_amount': adapAmount,
-       'rr_gpay_amount': rrGpayAmount,
-       'expense': expense,
-       'additional_collection': additionalCollection,
-       'additional_deduction': additionalDeduction,
-        'other_amount': otherAmount,
-        'extra_net_amount': extraNetAmount,
-        'previous_final_amount': previousFinalAmount,
-      };
+    double additionalCollection = 0.0,
+    double additionalDeduction = 0.0,
+    List<Map<String, dynamic>> deductionDetails = const [],
+    double otherAmount = 0.0,
+    double extraNetAmount = 0.0,
+    double previousFinalAmount = 0.0,
+    double totalAmount = 0.0,
+    double finalAmount = 0.0,
+  }) async {
+    final data = {
+      'entry_date': entryDate.toIso8601String().split('T')[0],
+      'region_id': regionId,
+      'model_id': modelId,
+      'bag_id': bagId,
+      'week_start_date': weekStartDate.toIso8601String().split('T')[0],
+      'day_of_week': dayOfWeek,
+      'net_amount_in_hand': netAmountInHand,
+      'collected_amount': collectedAmount,
+      'remaining_amount': remainingAmount,
+      'remaining_reason': remainingReason,
+      'document_fees': documentFees,
+      'adap_amount': adapAmount,
+      'rr_gpay_amount': rrGpayAmount,
+      'expense': expense,
+      'additional_collection': additionalCollection,
+      'additional_deduction': additionalDeduction,
+      'deduction_details': deductionDetails,
+      'other_amount': otherAmount,
+      'extra_net_amount': extraNetAmount,
+      'previous_final_amount': previousFinalAmount,
+    };
 
     try {
       final response = await _client
@@ -1006,28 +1003,33 @@ class SupabaseService {
 
       return DailyCashRecord.fromJson(response as Map<String, dynamic>);
     } catch (e) {
-       final errStr = e.toString();
-       final optionalCols = [
-         'extra_net_amount', 'total_amount', 'final_amount',
-         'additional_collection', 'additional_deduction', 'other_amount',
-         'previous_final_amount',
-       ];
-       bool hasSchemaError = false;
-       for (final col in optionalCols) {
-         if (errStr.contains(col)) {
-           hasSchemaError = true;
-           data.remove(col);
-         }
-       }
-       if (!hasSchemaError) rethrow;
-       final response = await _client
-           .from('daily_cash_records')
-           .insert(data)
-           .select()
-           .single();
-        return DailyCashRecord.fromJson(response as Map<String, dynamic>);
+      final errStr = e.toString();
+      final optionalCols = [
+        'extra_net_amount',
+        'total_amount',
+        'final_amount',
+        'additional_collection',
+        'additional_deduction',
+        'deduction_details',
+        'other_amount',
+        'previous_final_amount',
+      ];
+      bool hasSchemaError = false;
+      for (final col in optionalCols) {
+        if (errStr.contains(col)) {
+          hasSchemaError = true;
+          data.remove(col);
+        }
       }
+      if (!hasSchemaError) rethrow;
+      final response = await _client
+          .from('daily_cash_records')
+          .insert(data)
+          .select()
+          .single();
+      return DailyCashRecord.fromJson(response as Map<String, dynamic>);
     }
+  }
 
   Future<DailyCashRecord> updateDailyCashRecord({
     required String id,
@@ -1045,20 +1047,23 @@ class SupabaseService {
     double? adapAmount,
     double? rrGpayAmount,
     double? expense,
-     double? additionalCollection,
-     double? additionalDeduction,
-     double? otherAmount,
-     double? extraNetAmount,
-     double? previousFinalAmount,
-     double? totalAmount,
-     double? finalAmount,
-   }) async {
+    double? additionalCollection,
+    double? additionalDeduction,
+    List<Map<String, dynamic>>? deductionDetails,
+    double? otherAmount,
+    double? extraNetAmount,
+    double? previousFinalAmount,
+    double? totalAmount,
+    double? finalAmount,
+  }) async {
     final data = <String, dynamic>{};
-    if (entryDate != null) data['entry_date'] = entryDate.toIso8601String().split('T')[0];
+    if (entryDate != null)
+      data['entry_date'] = entryDate.toIso8601String().split('T')[0];
     if (regionId != null) data['region_id'] = regionId;
     if (modelId != null) data['model_id'] = modelId;
     if (bagId != null) data['bag_id'] = bagId;
-    if (weekStartDate != null) data['week_start_date'] = weekStartDate.toIso8601String().split('T')[0];
+    if (weekStartDate != null)
+      data['week_start_date'] = weekStartDate.toIso8601String().split('T')[0];
     if (dayOfWeek != null) data['day_of_week'] = dayOfWeek;
     if (netAmountInHand != null) data['net_amount_in_hand'] = netAmountInHand;
     if (collectedAmount != null) data['collected_amount'] = collectedAmount;
@@ -1068,52 +1073,61 @@ class SupabaseService {
     if (adapAmount != null) data['adap_amount'] = adapAmount;
     if (rrGpayAmount != null) data['rr_gpay_amount'] = rrGpayAmount;
     if (expense != null) data['expense'] = expense;
-    if (additionalCollection != null) data['additional_collection'] = additionalCollection;
-    if (additionalDeduction != null) data['additional_deduction'] = additionalDeduction;
+    if (additionalCollection != null)
+      data['additional_collection'] = additionalCollection;
+    if (additionalDeduction != null)
+      data['additional_deduction'] = additionalDeduction;
+    if (deductionDetails != null) data['deduction_details'] = deductionDetails;
     if (otherAmount != null) data['other_amount'] = otherAmount;
-     if (extraNetAmount != null) data['extra_net_amount'] = extraNetAmount;
-     if (previousFinalAmount != null) data['previous_final_amount'] = previousFinalAmount;
-     if (totalAmount != null) data['total_amount'] = totalAmount;
-     if (finalAmount != null) data['final_amount'] = finalAmount;
+    if (extraNetAmount != null) data['extra_net_amount'] = extraNetAmount;
+    if (previousFinalAmount != null)
+      data['previous_final_amount'] = previousFinalAmount;
+    if (totalAmount != null) data['total_amount'] = totalAmount;
+    if (finalAmount != null) data['final_amount'] = finalAmount;
 
-     if (data.isEmpty) {
-       throw Exception('No fields to update');
-     }
+    if (data.isEmpty) {
+      throw Exception('No fields to update');
+    }
 
-     try {
-       final response = await _client
-           .from('daily_cash_records')
-           .update(data)
-           .eq('id', id)
-           .select()
-           .single();
-       return DailyCashRecord.fromJson(response as Map<String, dynamic>);
-     } catch (e) {
-       final errStr = e.toString();
-       final optionalCols = [
-         'extra_net_amount', 'total_amount', 'final_amount',
-         'additional_collection', 'additional_deduction', 'other_amount',
-         'previous_final_amount',
-       ];
-       bool hasSchemaError = false;
-       for (final col in optionalCols) {
-         if (errStr.contains(col)) {
-           hasSchemaError = true;
-           data.remove(col);
-         }
-       }
-       if (!hasSchemaError) rethrow;
-       final response = await _client
-           .from('daily_cash_records')
-           .update(data)
-           .eq('id', id)
-           .select()
-           .single();
-       return DailyCashRecord.fromJson(response as Map<String, dynamic>);
-     }
-   }
+    try {
+      final response = await _client
+          .from('daily_cash_records')
+          .update(data)
+          .eq('id', id)
+          .select()
+          .single();
+      return DailyCashRecord.fromJson(response as Map<String, dynamic>);
+    } catch (e) {
+      final errStr = e.toString();
+      final optionalCols = [
+        'extra_net_amount',
+        'total_amount',
+        'final_amount',
+        'additional_collection',
+        'additional_deduction',
+        'deduction_details',
+        'other_amount',
+        'previous_final_amount',
+      ];
+      bool hasSchemaError = false;
+      for (final col in optionalCols) {
+        if (errStr.contains(col)) {
+          hasSchemaError = true;
+          data.remove(col);
+        }
+      }
+      if (!hasSchemaError) rethrow;
+      final response = await _client
+          .from('daily_cash_records')
+          .update(data)
+          .eq('id', id)
+          .select()
+          .single();
+      return DailyCashRecord.fromJson(response as Map<String, dynamic>);
+    }
+  }
 
-   Future<void> deleteDailyCashRecord(String id) async {
+  Future<void> deleteDailyCashRecord(String id) async {
     await _client.from('daily_cash_records').delete().eq('id', id);
   }
 
@@ -1124,25 +1138,35 @@ class SupabaseService {
   }) async {
     final dateStr = entryDate.toIso8601String().split('T')[0];
     try {
-      await _client
-          .from('bag_net_amounts')
-          .upsert({
-            'bag_id': bagId,
-            'entry_date': dateStr,
-            'amount': amount,
-          });
+      await _client.from('bag_net_amounts').upsert({
+        'bag_id': bagId,
+        'entry_date': dateStr,
+        'amount': amount,
+      });
     } catch (e) {
-      // Fallback: use other_amount column on daily_cash_records
-      final records = await _client.from('daily_cash_records').select('id').eq('bag_id', bagId).eq('entry_date', dateStr);
+      // bag_net_amounts table may not exist; fall through to other_amount fallback
+    }
+    // Always update other_amount on the daily_cash_records table so that
+    // finalAmount calculations include the net amount
+    try {
+      final records = await _client
+          .from('daily_cash_records')
+          .select('id')
+          .eq('bag_id', bagId)
+          .eq('entry_date', dateStr);
       final list = records as List;
       if (list.isNotEmpty) {
         final recordId = (list.first as Map<String, dynamic>)['id'];
-        await _client.from('daily_cash_records').update({'other_amount': amount}).eq('id', recordId);
+        await _client
+            .from('daily_cash_records')
+            .update({'other_amount': amount}).eq('id', recordId);
       }
+    } catch (e) {
+      // If no record found for this date, the amount is in bag_net_amounts only
     }
   }
 
-   Future<double> getBagNetAmount({
+  Future<double> getBagNetAmount({
     required String bagId,
     required DateTime onOrBeforeDate,
   }) async {
@@ -1180,7 +1204,9 @@ class SupabaseService {
             .limit(1);
         final list = response as List;
         if (list.isNotEmpty) {
-          total = ((list.first as Map<String, dynamic>)['amount'] as num?)?.toDouble() ?? 0.0;
+          total = ((list.first as Map<String, dynamic>)['amount'] as num?)
+                  ?.toDouble() ??
+              0.0;
         }
         return total;
       } catch (e2) {
