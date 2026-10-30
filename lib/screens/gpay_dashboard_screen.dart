@@ -271,11 +271,32 @@ class _GPayBagCardState extends ConsumerState<_GPayBagCard> {
                           overflow: TextOverflow.ellipsis,
                         ),
                         const SizedBox(height: 3),
-                        Text(
-                          'Week: ${widget.fmt.format(d.weekGPay)} • All Time: ${widget.fmt.format(d.totalGPay)} • ${d.weekCount} txns this week',
-                          style: const TextStyle(color: _gSubtext, fontSize: 11),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
+                        Builder(
+                          builder: (context) {
+                            final now = DateTime.now();
+                            final isUpdatedToday = d.lastUpdated != null &&
+                                d.lastUpdated!.year == now.year &&
+                                d.lastUpdated!.month == now.month &&
+                                d.lastUpdated!.day == now.day;
+                            if (isUpdatedToday) {
+                              return Text(
+                                'Week: ${widget.fmt.format(d.weekGPay)} â€¢ All Time: ${widget.fmt.format(d.totalGPay)} â€¢ ${d.weekCount} txns this week',
+                                style: const TextStyle(color: _gSubtext, fontSize: 11),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              );
+                            } else {
+                              final lastUpdatedText = d.lastUpdated != null
+                                  ? DateFormat('d MMM yyyy hh:mm a').format(d.lastUpdated!)
+                                  : 'Never';
+                              return Text(
+                                'Last Updated: $lastUpdatedText â€¢ Week: ${widget.fmt.format(d.weekGPay)} â€¢ All Time: ${widget.fmt.format(d.totalGPay)}',
+                                style: const TextStyle(color: _gGold, fontSize: 11, fontWeight: FontWeight.w600),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              );
+                            }
+                          },
                         ),
                       ],
                     ),
@@ -303,11 +324,21 @@ class _GPayBagCardState extends ConsumerState<_GPayBagCard> {
                   _statRow('GPay Expense (All Time)', widget.fmt.format(d.totalGPayExpense), _gRed),
                   _statRow('This Week Txns', '${d.weekCount}', _gGreen),
                   _statRow('All Time Txns', '${d.totalCount}', _gPurple),
-                  _statRow('Last Updated', d.lastUpdated != null
-                      ? DateFormat('EEE, d MMM yyyy hh:mm a').format(d.lastUpdated!)
-                      : 'Never',
-                      _gSubtext),
-                  const SizedBox(height: 4),
+                  if (d.lastUpdated != null) ...[
+                    const Divider(height: 1, color: _gBorder),
+                    const SizedBox(height: 6),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text('Last Updated', style: TextStyle(color: _gSubtext, fontSize: 12)),
+                        Text(
+                          DateFormat('EEE, d MMM yyyy hh:mm a').format(d.lastUpdated!),
+                          style: const TextStyle(color: _gText, fontSize: 12, fontWeight: FontWeight.w600),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                  ],
                 ],
               ),
             ),

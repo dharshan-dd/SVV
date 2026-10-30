@@ -160,13 +160,13 @@ class _BagHistoryScreenState extends ConsumerState<BagHistoryScreen> {
                                 Expanded(
                                   child: _SummaryTile(
                                     label: 'Total Expected',
-                                    value: NumberFormat.currency(symbol: '₹', decimalDigits: 2).format(totalExpected),
+                                    value: NumberFormat.currency(symbol: '\u20B9', decimalDigits: 2).format(totalExpected),
                                   ),
                                 ),
                                 Expanded(
                                   child: _SummaryTile(
                                     label: 'Total Collected',
-                                    value: NumberFormat.currency(symbol: '₹', decimalDigits: 2).format(totalCollected),
+                                    value: NumberFormat.currency(symbol: '\u20B9', decimalDigits: 2).format(totalCollected),
                                   ),
                                 ),
                               ],
@@ -177,7 +177,7 @@ class _BagHistoryScreenState extends ConsumerState<BagHistoryScreen> {
                                 Expanded(
                                   child: _SummaryTile(
                                     label: 'Total Pending',
-                                    value: NumberFormat.currency(symbol: '₹', decimalDigits: 2).format(totalPending),
+                                    value: NumberFormat.currency(symbol: '\u20B9', decimalDigits: 2).format(totalPending),
                                   ),
                                 ),
                                 Expanded(
@@ -241,9 +241,9 @@ class _BagHistoryScreenState extends ConsumerState<BagHistoryScreen> {
                               trailing: Container(
                                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                                 decoration: BoxDecoration(
-                                  color: statusColor.withOpacity(0.1),
+                                  color: statusColor.withValues(alpha: 0.1),
                                   borderRadius: BorderRadius.circular(20),
-                                  border: Border.all(color: statusColor.withOpacity(0.3)),
+                                  border: Border.all(color: statusColor.withValues(alpha: 0.3)),
                                 ),
                                 child: Text(
                                   cycle.status.replaceAll('_', ' ').toUpperCase(),
