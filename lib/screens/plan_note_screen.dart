@@ -221,7 +221,7 @@ class _PlanNoteScreenState extends ConsumerState<PlanNoteScreen>
                 ? _buildLoading()
                 : grouped.isEmpty
                     ? _buildEmpty()
-                    : _buildBranches(fmt, grouped),
+                    : _buildFlatRecords(fmt),
           ),
         ]),
       ),
@@ -256,6 +256,26 @@ class _PlanNoteScreenState extends ConsumerState<PlanNoteScreen>
         ]),
       );
 
+  Widget _buildFlatRecords(NumberFormat fmt) {
+    final records = [..._records];
+    records.sort((a, b) {
+      final cmp = b.entryDate.compareTo(a.entryDate);
+      if (cmp != 0) return cmp;
+      final cmp2 = b.createdAt.compareTo(a.createdAt);
+      if (cmp2 != 0) return cmp2;
+      return b.id.compareTo(a.id);
+    });
+    return Padding(
+      padding: const EdgeInsets.all(16),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+        for (final r in records) ...[
+          _RecordDetail(record: r, fmt: fmt, onDeleted: _load, onEdit: _load),
+          const SizedBox(height: 10),
+        ],
+      ]),
+    );
+  }
+
   Widget _buildBranches(NumberFormat fmt,
       Map<String, Map<String, List<DailyCashRecord>>> grouped) {
     return Padding(
@@ -273,11 +293,11 @@ class _PlanNoteScreenState extends ConsumerState<PlanNoteScreen>
       Map<String, List<DailyCashRecord>> bagsMap, NumberFormat fmt) {
     final allRecords = bagsMap.values.expand((r) => r).toList();
     allRecords.sort((a, b) {
-      final cmp = a.entryDate.compareTo(b.entryDate);
+      final cmp = b.entryDate.compareTo(a.entryDate);
       if (cmp != 0) return cmp;
-      final cmp2 = a.createdAt.compareTo(b.createdAt);
+      final cmp2 = b.createdAt.compareTo(a.createdAt);
       if (cmp2 != 0) return cmp2;
-      return a.id.compareTo(b.id);
+      return b.id.compareTo(a.id);
     });
 
     final totalCollected =
@@ -342,7 +362,7 @@ class _PlanNoteScreenState extends ConsumerState<PlanNoteScreen>
       ),
       if (isBagMode) ...[
         const SizedBox(height: 8),
-        ..._buildRecordsWithWeekLabels(allRecords, fmt),
+        ..._buildRecordsFlat(allRecords, fmt),
       ] else ...[
         for (final bagEntry in bagsMap.entries) ...[
           const SizedBox(height: 8),
@@ -355,11 +375,11 @@ class _PlanNoteScreenState extends ConsumerState<PlanNoteScreen>
   Widget _bagSubSection(
       String bagName, List<DailyCashRecord> records, NumberFormat fmt) {
     records.sort((a, b) {
-      final cmp = a.entryDate.compareTo(b.entryDate);
+      final cmp = b.entryDate.compareTo(a.entryDate);
       if (cmp != 0) return cmp;
-      final cmp2 = a.createdAt.compareTo(b.createdAt);
+      final cmp2 = b.createdAt.compareTo(a.createdAt);
       if (cmp2 != 0) return cmp2;
-      return a.id.compareTo(b.id);
+      return b.id.compareTo(a.id);
     });
 
     final bagFinal = records.fold(0.0, (s, r) => s + r.finalAmount);
@@ -389,23 +409,15 @@ class _PlanNoteScreenState extends ConsumerState<PlanNoteScreen>
         ]),
       ),
       const SizedBox(height: 8),
-      ..._buildRecordsWithWeekLabels(records, fmt),
+      ..._buildRecordsFlat(records, fmt),
     ]);
   }
 
-  List<Widget> _buildRecordsWithWeekLabels(
+  List<Widget> _buildRecordsFlat(
       List<DailyCashRecord> records, NumberFormat fmt) {
     final widgets = <Widget>[];
-    String? currentWeekStart;
     for (final r in records) {
-      final weekStart = _weekStartString(r.entryDate);
-      if (weekStart != currentWeekStart) {
-        currentWeekStart = weekStart;
-        widgets.add(_weekLabel(r.entryDate, fmt));
-        widgets.add(const SizedBox(height: 8));
-      }
-      widgets.add(
-          _RecordDetail(record: r, fmt: fmt, onDeleted: _load, onEdit: _load));
+      widgets.add(_RecordDetail(record: r, fmt: fmt, onDeleted: _load, onEdit: _load));
       widgets.add(const SizedBox(height: 10));
     }
     return widgets;
