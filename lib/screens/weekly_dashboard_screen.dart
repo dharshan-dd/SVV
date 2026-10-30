@@ -123,6 +123,17 @@ class _WeeklyDashboardScreenState extends ConsumerState<WeeklyDashboardScreen>
                     final totalGpay = currentWeekRecords.fold(0.0, (s, r) => s + r.rrGpayAmount);
                     final totalExtraNet = currentWeekRecords.fold(0.0, (s, r) => s + r.extraNetAmount);
 
+                    // Find last updated across current week records
+                    DateTime? lastUpdated;
+                    if (currentWeekRecords.isNotEmpty) {
+                      lastUpdated = currentWeekRecords.map((r) => r.updatedAt).reduce((a, b) => a.isAfter(b) ? a : b);
+                    }
+                    final now = DateTime.now();
+                    final isUpdatedToday = lastUpdated != null &&
+                        lastUpdated.year == now.year &&
+                        lastUpdated.month == now.month &&
+                        lastUpdated.day == now.day;
+
                     // Extract additional collection details for the week
                     final additionalCollectionDetails = <Map<String, dynamic>>[];
                     final expenseDetails = <Map<String, dynamic>>[];
@@ -172,7 +183,6 @@ class _WeeklyDashboardScreenState extends ConsumerState<WeeklyDashboardScreen>
                         }
                       }
                     }
-
                      return Padding(
                        padding: const EdgeInsets.fromLTRB(16, 0, 16, 40),
                        child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
@@ -180,8 +190,37 @@ class _WeeklyDashboardScreenState extends ConsumerState<WeeklyDashboardScreen>
                          _weekNav(),
                          const SizedBox(height: 16),
                          _buildBagFilter(fmt),
-                         const SizedBox(height: 16),
-                           _summaryRow(fmt, weekFinal, totalCollected, totalAdditionalCollection, totalExpense, totalGiven, totalGpay, totalExtraNet, daysRecorded),
+                         const SizedBox(height: 12),
+                         if (lastUpdated != null && !isUpdatedToday) ...[
+                           Container(
+                             width: double.infinity,
+                             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                             decoration: BoxDecoration(
+                               color: _kOrange.withValues(alpha: 0.12),
+                               borderRadius: BorderRadius.circular(10),
+                               border: Border.all(color: _kOrange.withValues(alpha: 0.3)),
+                             ),
+                             child: Row(
+                               children: [
+                                 Icon(Icons.info_outline_rounded, color: _kOrange, size: 18),
+                                 const SizedBox(width: 8),
+                                 Expanded(
+                                   child: Text(
+                                     'Last Updated: ${DateFormat('EEE, d MMM yyyy hh:mm a').format(lastUpdated)}',
+                                     style: const TextStyle(
+                                       color: _kOrange,
+                                       fontSize: 12,
+                                       fontWeight: FontWeight.w600,
+                                     ),
+                                   ),
+                                 ),
+                               ],
+                             ),
+                           ),
+                           const SizedBox(height: 12),
+                         ],
+                         _summaryRow(fmt, weekFinal, totalCollected, totalAdditionalCollection, totalExpense, 
+totalGiven, totalGpay, totalExtraNet, daysRecorded),
                         if (additionalCollectionDetails.isNotEmpty) ...[
                           const SizedBox(height: 16),
                           const Divider(),

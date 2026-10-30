@@ -2,13 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
-import '../models/daily_collection_entry.dart';
-import '../models/region.dart';
-import '../models/model_type.dart';
-import '../models/collection_bag.dart';
 import '../providers/app_providers.dart';
-import '../services/supabase_service.dart';
+import '../theme/app_tokens.dart';
+import '../utils/formatters.dart';
 import '../widgets/index.dart';
 import '../widgets/app_drawer.dart';
 
@@ -19,8 +15,9 @@ class DashboardScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final today = DateTime.now();
-    final currencyFormat = NumberFormat.currency(symbol: '₹', decimalDigits: 2);
+
     final dateFormat = DateFormat('MMMM dd, yyyy');
+    final dailySummaryAsync = ref.watch(dailySummaryProvider(today));
 
     return Scaffold(
       appBar: AppBar(
@@ -62,13 +59,13 @@ class DashboardScreen extends ConsumerWidget {
                     end: Alignment.bottomRight,
                     colors: [
                       theme.primaryColor,
-                      theme.primaryColor.withOpacity(0.8),
+                      theme.primaryColor.withValues(alpha: 0.8),
                     ],
                   ),
                   borderRadius: BorderRadius.circular(16),
                   boxShadow: [
                     BoxShadow(
-                      color: theme.primaryColor.withOpacity(0.3),
+                      color: theme.primaryColor.withValues(alpha: 0.3),
                       blurRadius: 12,
                       offset: const Offset(0, 6),
                     ),
@@ -82,12 +79,12 @@ class DashboardScreen extends ConsumerWidget {
                         Container(
                           padding: const EdgeInsets.all(12),
                           decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.2),
+                            color: context.tokens.onPrimary.withValues(alpha: 0.2),
                             borderRadius: BorderRadius.circular(12),
                           ),
-                          child: const Icon(
+                          child: Icon(
                             Icons.account_balance_rounded,
-                            color: Colors.white,
+                            color: context.tokens.onPrimary,
                             size: 32,
                           ),
                         ),
@@ -99,7 +96,7 @@ class DashboardScreen extends ConsumerWidget {
                               Text(
                                 'Executive Summary',
                                 style: theme.textTheme.headlineSmall?.copyWith(
-                                  color: Colors.white,
+                                  color: context.tokens.onPrimary,
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
@@ -107,7 +104,7 @@ class DashboardScreen extends ConsumerWidget {
                               Text(
                                 dateFormat.format(today),
                                 style: theme.textTheme.bodyMedium?.copyWith(
-                                  color: Colors.white70,
+                                  color: context.tokens.onPrimary.withValues(alpha: 0.7),
                                 ),
                               ),
                             ],
@@ -123,7 +120,7 @@ class DashboardScreen extends ConsumerWidget {
                           'Total Entries',
                           '0',
                           Icons.receipt_long_rounded,
-                          Colors.white,
+                          context.tokens.onPrimary,
                         ),
                         const SizedBox(width: 16),
                         _buildQuickStat(
@@ -131,7 +128,7 @@ class DashboardScreen extends ConsumerWidget {
                           'Active Regions',
                           '0',
                           Icons.location_on_rounded,
-                          Colors.white,
+                          context.tokens.onPrimary,
                         ),
                         const SizedBox(width: 16),
                         _buildQuickStat(
@@ -139,7 +136,7 @@ class DashboardScreen extends ConsumerWidget {
                           'Total Bags',
                           '0',
                           Icons.inventory_2_rounded,
-                          Colors.white,
+                          context.tokens.onPrimary,
                         ),
                       ],
                     ),
@@ -149,27 +146,44 @@ class DashboardScreen extends ConsumerWidget {
 
               const SizedBox(height: 24),
 
-              // Daily Summary Section
-              Text(
-                'Today\'s Performance',
-                style: theme.textTheme.titleLarge?.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
+              // Today's Performance Section
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Today\'s Performance',
+                    style: theme.textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  dailySummaryAsync.when(
+                    data: (summary) {
+                      final lastUpdated = summary['lastUpdated'] as DateTime?;
+                      final now = DateTime.now();
+                      final isUpdatedToday = lastUpdated != null &&
+                          lastUpdated.year == now.year &&
+                          lastUpdated.month == now.month &&
+                          lastUpdated.day == now.day;
+                      if (!isUpdatedToday && lastUpdated != null) {
+                        return Text(
+                          'Last Updated: ${DateFormat('d MMM hh:mm a').format(lastUpdated)}',
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: context.tokens.warning,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        );
+                      }
+                      return const SizedBox.shrink();
+                    },
+                    loading: () => const SizedBox.shrink(),
+                    error: (_, __) => const SizedBox.shrink(),
+                  ),
+                ],
               ),
               const SizedBox(height: 12),
               _DailySummaryCard(date: today),
 
               const SizedBox(height: 24),
-
-              // Weekly Summary Section
-              Text(
-                'This Week\'s Overview',
-                style: theme.textTheme.titleLarge?.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 12),
-              _WeeklySummaryCard(weekStart: today),
 
               const SizedBox(height: 24),
 
@@ -204,25 +218,25 @@ class DashboardScreen extends ConsumerWidget {
                   _ActionCard(
                     title: 'Daily Entry',
                     icon: Icons.edit_note_rounded,
-                    color: Colors.green,
+                    color: context.tokens.success,
                     onTap: () => context.go('/daily-entry'),
                   ),
                   _ActionCard(
                     title: 'Weekly Entry',
                     icon: Icons.calendar_view_week_rounded,
-                    color: Colors.blue,
+                    color: context.tokens.info,
                     onTap: () => context.go('/weekly-entry'),
                   ),
                   _ActionCard(
                     title: 'Monthly Entry',
                     icon: Icons.calendar_month_rounded,
-                    color: Colors.purple,
+                    color: context.tokens.info,
                     onTap: () => context.go('/monthly-entry'),
                   ),
                   _ActionCard(
                     title: 'Admin Panel',
                     icon: Icons.settings_rounded,
-                    color: Colors.orange,
+                    color: context.tokens.warning,
                     onTap: () => context.go('/admin'),
                   ),
                 ],
@@ -241,28 +255,28 @@ class DashboardScreen extends ConsumerWidget {
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: Colors.white.withOpacity(0.15),
+          color: Colors.white.withValues(alpha: 0.15),
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.white.withOpacity(0.2)),
+          border: Border.all(color: context.tokens.onPrimary.withValues(alpha: 0.2)),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Icon(icon, color: Colors.white70, size: 20),
+            Icon(icon, color: context.tokens.onPrimary.withValues(alpha: 0.7), size: 20),
             const SizedBox(height: 8),
             Text(
               value,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.bold,
-                color: Colors.white,
+                color: context.tokens.onPrimary,
               ),
             ),
             Text(
               label,
               style: TextStyle(
                 fontSize: 12,
-                color: Colors.white70,
+                color: context.tokens.onPrimary.withValues(alpha: 0.7),
               ),
             ),
           ],
@@ -294,7 +308,7 @@ class _DailySummaryCard extends ConsumerWidget {
           color: theme.colorScheme.surface,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
-            side: BorderSide(color: theme.colorScheme.outline.withOpacity(0.2)),
+            side: BorderSide(color: theme.colorScheme.outline.withValues(alpha: 0.2)),
           ),
           child: Padding(
             padding: const EdgeInsets.all(20),
@@ -307,7 +321,7 @@ class _DailySummaryCard extends ConsumerWidget {
                         context,
                         'Total Credit',
                         totalCredit,
-                        Colors.green,
+                        context.tokens.success,
                         Icons.arrow_upward_rounded,
                       ),
                     ),
@@ -317,7 +331,7 @@ class _DailySummaryCard extends ConsumerWidget {
                         context,
                         'Total Debit',
                         totalDebit,
-                        Colors.orange,
+                        context.tokens.warning,
                         Icons.arrow_downward_rounded,
                       ),
                     ),
@@ -331,7 +345,7 @@ class _DailySummaryCard extends ConsumerWidget {
                         context,
                         'Net Balance',
                         netBalance,
-                        netBalance >= 0 ? Colors.blue : Colors.red,
+                        netBalance >= 0 ? context.tokens.info : context.tokens.danger,
                         netBalance >= 0 ? Icons.trending_up_rounded : Icons.trending_down_rounded,
                       ),
                     ),
@@ -341,7 +355,7 @@ class _DailySummaryCard extends ConsumerWidget {
                         context,
                         'Entries',
                         entryCount.toDouble(),
-                        Colors.purple,
+                        context.tokens.info,
                         Icons.list_rounded,
                         isCount: true,
                       ),
@@ -358,7 +372,7 @@ class _DailySummaryCard extends ConsumerWidget {
         color: theme.colorScheme.surface,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
-          side: BorderSide(color: theme.colorScheme.outline.withOpacity(0.2)),
+          side: BorderSide(color: theme.colorScheme.outline.withValues(alpha: 0.2)),
         ),
         child: const Padding(
           padding: EdgeInsets.all(40),
@@ -370,7 +384,7 @@ class _DailySummaryCard extends ConsumerWidget {
         color: theme.colorScheme.surface,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
-          side: BorderSide(color: theme.colorScheme.outline.withOpacity(0.2)),
+          side: BorderSide(color: theme.colorScheme.outline.withValues(alpha: 0.2)),
         ),
         child: Padding(
           padding: const EdgeInsets.all(16),
@@ -382,16 +396,15 @@ class _DailySummaryCard extends ConsumerWidget {
 
   Widget _buildMetricCard(BuildContext context, String label, double value, Color color, IconData icon, {bool isCount = false}) {
     final theme = Theme.of(context);
-    final format = isCount
-        ? NumberFormat.decimalPattern()
-        : NumberFormat.currency(symbol: '₹', decimalDigits: 2);
-
+    final formatted = isCount
+        ? NumberFormat.decimalPattern().format(value)
+        : Formatters.formatInr(value);
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.08),
+        color: color.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: color.withOpacity(0.2)),
+        border: Border.all(color: color.withValues(alpha: 0.2)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -414,140 +427,7 @@ class _DailySummaryCard extends ConsumerWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            format.format(value),
-            style: theme.textTheme.titleMedium?.copyWith(
-              color: color,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _WeeklySummaryCard extends ConsumerWidget {
-  final DateTime weekStart;
-
-  const _WeeklySummaryCard({required this.weekStart});
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final summaryAsync = ref.watch(weeklySummaryProvider(weekStart));
-    final theme = Theme.of(context);
-
-    return summaryAsync.when(
-      data: (data) {
-        final totalCollection = data['totalCollectionCash']! + data['totalCollectionUpi']!;
-        final totalLoans = data['totalNewLoanCash']! + data['totalNewLoanUpi']!;
-        final netFlow = data['netCashFlow']!;
-
-        return Card(
-          elevation: 0,
-          color: theme.colorScheme.surface,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-            side: BorderSide(color: theme.colorScheme.outline.withOpacity(0.2)),
-          ),
-          child: Padding(
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              children: [
-                Row(
-                  children: [
-                    Expanded(
-                      child: _buildMetricCard(
-                        context,
-                        'Total Collections',
-                        totalCollection,
-                        Colors.green,
-                        Icons.savings_rounded,
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: _buildMetricCard(
-                        context,
-                        'Total Loans Issued',
-                        totalLoans,
-                        Colors.orange,
-                        Icons.money_rounded,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                _buildMetricCard(
-                  context,
-                  'Net Cash Flow',
-                  netFlow,
-                  netFlow >= 0 ? Colors.blue : Colors.red,
-                  netFlow >= 0 ? Icons.trending_up_rounded : Icons.trending_down_rounded,
-                ),
-              ],
-            ),
-          ),
-        );
-      },
-      loading: () => Card(
-        elevation: 0,
-        color: theme.colorScheme.surface,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-          side: BorderSide(color: theme.colorScheme.outline.withOpacity(0.2)),
-        ),
-        child: const Padding(
-          padding: EdgeInsets.all(40),
-          child: Center(child: CircularProgressIndicator()),
-        ),
-      ),
-      error: (error, _) => Card(
-        elevation: 0,
-        color: theme.colorScheme.surface,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-          side: BorderSide(color: theme.colorScheme.outline.withOpacity(0.2)),
-        ),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Text('Error: $error'),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildMetricCard(BuildContext context, String label, double value, Color color, IconData icon) {
-    final theme = Theme.of(context);
-
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: color.withOpacity(0.08),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: color.withOpacity(0.2)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(icon, size: 18, color: color),
-              const SizedBox(width: 6),
-              Expanded(
-                child: Text(
-                  label,
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.colorScheme.onSurfaceVariant,
-                    fontWeight: FontWeight.w500,
-                  ),
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Text(
-            NumberFormat.currency(symbol: '₹', decimalDigits: 2).format(value),
+            formatted,
             style: theme.textTheme.titleMedium?.copyWith(
               color: color,
               fontWeight: FontWeight.bold,
@@ -580,7 +460,7 @@ class _MonthlySummaryCard extends ConsumerWidget {
           color: theme.colorScheme.surface,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
-            side: BorderSide(color: theme.colorScheme.outline.withOpacity(0.2)),
+            side: BorderSide(color: theme.colorScheme.outline.withValues(alpha: 0.2)),
           ),
           child: Padding(
             padding: const EdgeInsets.all(20),
@@ -593,7 +473,7 @@ class _MonthlySummaryCard extends ConsumerWidget {
                         context,
                         'Total Credit (P&L)',
                         totalCredit,
-                        Colors.green,
+                        context.tokens.success,
                         Icons.account_balance_wallet_rounded,
                       ),
                     ),
@@ -603,7 +483,7 @@ class _MonthlySummaryCard extends ConsumerWidget {
                         context,
                         'Total Debit',
                         totalDebit,
-                        Colors.orange,
+                        context.tokens.warning,
                         Icons.money_off_rounded,
                       ),
                     ),
@@ -614,7 +494,7 @@ class _MonthlySummaryCard extends ConsumerWidget {
                   context,
                   'Net Profit / Operating Cash',
                   netProfit,
-                  netProfit >= 0 ? Colors.green : Colors.red,
+                  netProfit >= 0 ? context.tokens.success : context.tokens.danger,
                   netProfit >= 0 ? Icons.trending_up_rounded : Icons.trending_down_rounded,
                 ),
               ],
@@ -627,7 +507,7 @@ class _MonthlySummaryCard extends ConsumerWidget {
         color: theme.colorScheme.surface,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
-          side: BorderSide(color: theme.colorScheme.outline.withOpacity(0.2)),
+          side: BorderSide(color: theme.colorScheme.outline.withValues(alpha: 0.2)),
         ),
         child: const Padding(
           padding: EdgeInsets.all(40),
@@ -639,7 +519,7 @@ class _MonthlySummaryCard extends ConsumerWidget {
         color: theme.colorScheme.surface,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
-          side: BorderSide(color: theme.colorScheme.outline.withOpacity(0.2)),
+          side: BorderSide(color: theme.colorScheme.outline.withValues(alpha: 0.2)),
         ),
         child: Padding(
           padding: const EdgeInsets.all(16),
@@ -655,9 +535,9 @@ class _MonthlySummaryCard extends ConsumerWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.08),
+        color: color.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: color.withOpacity(0.2)),
+        border: Border.all(color: color.withValues(alpha: 0.2)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -680,7 +560,7 @@ class _MonthlySummaryCard extends ConsumerWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            NumberFormat.currency(symbol: '₹', decimalDigits: 2).format(value),
+            Formatters.formatInr(value),
             style: theme.textTheme.titleMedium?.copyWith(
               color: color,
               fontWeight: FontWeight.bold,
@@ -714,7 +594,7 @@ class _ActionCard extends StatelessWidget {
       color: theme.colorScheme.surface,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
-        side: BorderSide(color: theme.colorScheme.outline.withOpacity(0.2)),
+        side: BorderSide(color: theme.colorScheme.outline.withValues(alpha: 0.2)),
       ),
       child: InkWell(
         onTap: onTap,
@@ -727,7 +607,7 @@ class _ActionCard extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: color.withOpacity(0.12),
+                  color: color.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Icon(icon, size: 28, color: color),
