@@ -1,6 +1,54 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/index.dart';
 
+/// Recursively converts [value] into something `jsonEncode` can always
+/// serialise. PostgREST calls `jsonEncode` on the request body, so any
+/// non-primitive value (e.g. a TextEditingController, DateTime, enum, or a
+/// model instance) reaching the payload throws
+/// "Converting object to an encodable object failed".
+@pragma('dart2js:noInline')
+Object? _encodable(Object? value) {
+  if (value == null || value is num || value is String || value is bool) {
+    return value;
+  }
+  if (value is DateTime) return value.toIso8601String();
+  if (value is Enum) return value.name;
+  if (value is Map) {
+    final out = <String, dynamic>{};
+    value.forEach((k, v) {
+      final key = k is String
+          ? k
+          : (k is Enum ? k.name : k?.toString() ?? 'key');
+      out[key] = _encodable(v);
+    });
+    return out;
+  }
+  if (value is Iterable) return value.map(_encodable).toList();
+  return value.toString();
+}
+
+/// Returns a copy of [body] with every value guaranteed JSON-encodable.
+@pragma('dart2js:noInline')
+  Map<String, dynamic> sanitizeJson(Map<String, dynamic> body) {
+    final out = <String, dynamic>{};
+    body.forEach((k, v) => out[k] = _encodable(v));
+    // Ensure deduction_details is JSON serializable as list of maps
+    if (out['deduction_details'] is List) {
+      final list = <Map<String, dynamic>>[];
+      for (final item in out['deduction_details'] as List) {
+        if (item is Map) {
+          list.add(Map<String, dynamic>.from(item));
+        }
+      }
+      out['deduction_details'] = list;
+    }
+    return out;
+  }
+
+/// Returns a copy with every value guaranteed JSON-encodable.
+@pragma('dart2js:noInline')
+Object? sanitizeObject(Object? value) => _encodable(value);
+
 class SupabaseService {
   static final SupabaseService _instance = SupabaseService._internal();
   factory SupabaseService() => _instance;
@@ -29,7 +77,7 @@ class SupabaseService {
 
   Future<Region> createRegion({required String name}) async {
     final response =
-        await _client.from('regions').insert({'name': name}).select().single();
+        await _client.from('regions').insert(sanitizeJson({'name': name})).select().single();
 
     return Region.fromJson(response as Map<String, dynamic>);
   }
@@ -38,7 +86,7 @@ class SupabaseService {
       {required String id, required String name}) async {
     final response = await _client
         .from('regions')
-        .update({'name': name})
+        .update(sanitizeJson({'name': name}))
         .eq('id', id)
         .select()
         .single();
@@ -65,7 +113,7 @@ class SupabaseService {
 
   Future<ModelType> createModel({required String name}) async {
     final response =
-        await _client.from('models').insert({'name': name}).select().single();
+        await _client.from('models').insert(sanitizeJson({'name': name})).select().single();
 
     return ModelType.fromJson(response as Map<String, dynamic>);
   }
@@ -74,7 +122,7 @@ class SupabaseService {
       {required String id, required String name}) async {
     final response = await _client
         .from('models')
-        .update({'name': name})
+        .update(sanitizeJson({'name': name}))
         .eq('id', id)
         .select()
         .single();
@@ -104,7 +152,7 @@ class SupabaseService {
   Future<CollectionBag> createCollectionBag({required String name}) async {
     final response = await _client
         .from('collection_bags')
-        .insert({'name': name})
+        .insert(sanitizeJson({'name': name}))
         .select()
         .single();
 
@@ -117,7 +165,7 @@ class SupabaseService {
   }) async {
     final response = await _client
         .from('collection_bags')
-        .update({'name': name})
+        .update(sanitizeJson({'name': name}))
         .eq('id', id)
         .select()
         .single();
@@ -188,7 +236,11 @@ class SupabaseService {
     };
 
     final response =
-        await _client.from('bag_configurations').insert(data).select().single();
+        await _client
+        .from('bag_configurations')
+        .insert(sanitizeJson(data))
+        .select()
+        .single();
 
     return BagConfiguration.fromJson(response as Map<String, dynamic>);
   }
@@ -240,7 +292,7 @@ class SupabaseService {
 
     final response = await _client
         .from('bag_configurations')
-        .update(data)
+        .update(sanitizeJson(data))
         .eq('id', id)
         .select()
         .single();
@@ -305,8 +357,11 @@ class SupabaseService {
       'previous_cycle_id': previousCycleId,
     };
 
-    final response =
-        await _client.from('collection_cycles').insert(data).select().single();
+    final response = await _client
+        .from('collection_cycles')
+        .insert(sanitizeJson(data))
+        .select()
+        .single();
 
     return CollectionCycle.fromJson(response as Map<String, dynamic>);
   }
@@ -326,7 +381,7 @@ class SupabaseService {
 
     final response = await _client
         .from('collection_cycles')
-        .update(data)
+        .update(sanitizeJson(data))
         .eq('id', id)
         .select()
         .single();
@@ -467,7 +522,7 @@ class SupabaseService {
     try {
       final response = await _client
           .from('daily_collection_entries')
-          .insert(data)
+          .insert(sanitizeJson(data))
           .select()
           .single();
       return DailyCollectionEntry.fromJson(response as Map<String, dynamic>);
@@ -485,7 +540,7 @@ class SupabaseService {
         data.remove('total_due');
         final response = await _client
             .from('daily_collection_entries')
-            .insert(data)
+            .insert(sanitizeJson(data))
             .select()
             .single();
         return DailyCollectionEntry.fromJson(response as Map<String, dynamic>);
@@ -540,7 +595,7 @@ class SupabaseService {
 
     final response = await _client
         .from('daily_collection_entries')
-        .update(data)
+        .update(sanitizeJson(data))
         .eq('id', id)
         .select()
         .single();
@@ -549,10 +604,13 @@ class SupabaseService {
   }
 
   Future<void> softDeleteDailyCollectionEntry(String id) async {
-    await _client.from('daily_collection_entries').update({
-      'is_deleted': true,
-      'deleted_at': DateTime.now().toIso8601String(),
-    }).eq('id', id);
+    await _client
+        .from('daily_collection_entries')
+        .update(sanitizeJson({
+          'is_deleted': true,
+          'deleted_at': DateTime.now().toIso8601String(),
+        }))
+        .eq('id', id);
   }
 
   Future<void> deleteDailyCollectionEntry(String id) async {
@@ -570,7 +628,7 @@ class SupabaseService {
       final response = await _client
           .from('daily_cash_records')
           .select(
-              'final_amount, collected_amount, expense, adap_amount, document_fees, remaining_amount, total_amount')
+              'final_amount, collected_amount, expense, adap_amount, document_fees, remaining_amount, total_amount, updated_at')
           .eq('entry_date', dateStr);
 
       if (response.isEmpty) {
@@ -583,6 +641,7 @@ class SupabaseService {
           'total_remaining': 0.0,
           'total_amount': 0.0,
           'entry_count': 0,
+          'lastUpdated': null,
         };
       }
 
@@ -593,6 +652,7 @@ class SupabaseService {
       double sumDocFees = 0;
       double sumRemaining = 0;
       double sumTotal = 0;
+      DateTime? lastUpdated;
 
       for (final row in response) {
         sumFinal += (row['final_amount'] as num?)?.toDouble() ?? 0.0;
@@ -602,6 +662,12 @@ class SupabaseService {
         sumDocFees += (row['document_fees'] as num?)?.toDouble() ?? 0.0;
         sumRemaining += (row['remaining_amount'] as num?)?.toDouble() ?? 0.0;
         sumTotal += (row['total_amount'] as num?)?.toDouble() ?? 0.0;
+        final updated = row['updated_at'] != null ? DateTime.tryParse(row['updated_at'] as String) : null;
+        if (updated != null) {
+          if (lastUpdated == null || updated.isAfter(lastUpdated)) {
+            lastUpdated = updated;
+          }
+        }
       }
 
       return {
@@ -613,12 +679,17 @@ class SupabaseService {
         'total_remaining': sumRemaining,
         'total_amount': sumTotal,
         'entry_count': response.length,
+        'lastUpdated': lastUpdated,
       };
     } catch (_) {
       try {
         final response = await _client
             .rpc('get_daily_summary', params: {'p_date': dateStr}).single();
-        return response as Map<String, dynamic>;
+        final result = response as Map<String, dynamic>;
+        if (result['last_updated'] != null) {
+          result['lastUpdated'] = DateTime.tryParse(result['last_updated'].toString());
+        }
+        return result;
       } catch (e) {
         return <String, dynamic>{};
       }
@@ -691,7 +762,7 @@ class SupabaseService {
 
     final response = await _client
         .from('weekly_collection_entries')
-        .insert(data)
+        .insert(sanitizeJson(data))
         .select()
         .single();
 
@@ -770,7 +841,7 @@ class SupabaseService {
 
     final response = await _client
         .from('monthly_collection_entries')
-        .insert(data)
+        .insert(sanitizeJson(data))
         .select()
         .single();
 
@@ -853,7 +924,7 @@ class SupabaseService {
 
     final response = await _client
         .from('day_branch_assignments')
-        .insert(data)
+        .insert(sanitizeJson(data))
         .select('*, region:regions(name)')
         .single();
 
@@ -873,7 +944,7 @@ class SupabaseService {
 
     final response = await _client
         .from('day_branch_assignments')
-        .update(data)
+        .update(sanitizeJson(data))
         .eq('id', id)
         .select('*, region:regions(name)')
         .single();
@@ -993,11 +1064,12 @@ class SupabaseService {
       'extra_net_amount': extraNetAmount,
       'previous_final_amount': previousFinalAmount,
     };
+    final payload = sanitizeJson(data);
 
     try {
       final response = await _client
           .from('daily_cash_records')
-          .insert(data)
+          .insert(payload)
           .select()
           .single();
 
@@ -1018,13 +1090,13 @@ class SupabaseService {
       for (final col in optionalCols) {
         if (errStr.contains(col)) {
           hasSchemaError = true;
-          data.remove(col);
+          payload.remove(col);
         }
       }
       if (!hasSchemaError) rethrow;
       final response = await _client
           .from('daily_cash_records')
-          .insert(data)
+          .insert(payload)
           .select()
           .single();
       return DailyCashRecord.fromJson(response as Map<String, dynamic>);
@@ -1088,11 +1160,12 @@ class SupabaseService {
     if (data.isEmpty) {
       throw Exception('No fields to update');
     }
+    final payload = sanitizeJson(data);
 
     try {
       final response = await _client
           .from('daily_cash_records')
-          .update(data)
+          .update(payload)
           .eq('id', id)
           .select()
           .single();
@@ -1113,13 +1186,13 @@ class SupabaseService {
       for (final col in optionalCols) {
         if (errStr.contains(col)) {
           hasSchemaError = true;
-          data.remove(col);
+          payload.remove(col);
         }
       }
       if (!hasSchemaError) rethrow;
       final response = await _client
           .from('daily_cash_records')
-          .update(data)
+          .update(payload)
           .eq('id', id)
           .select()
           .single();
@@ -1138,11 +1211,11 @@ class SupabaseService {
   }) async {
     final dateStr = entryDate.toIso8601String().split('T')[0];
     try {
-      await _client.from('bag_net_amounts').upsert({
+      await _client.from('bag_net_amounts').upsert(sanitizeJson({
         'bag_id': bagId,
         'entry_date': dateStr,
         'amount': amount,
-      });
+      }));
     } catch (e) {
       // bag_net_amounts table may not exist; fall through to other_amount fallback
     }
@@ -1159,7 +1232,8 @@ class SupabaseService {
         final recordId = (list.first as Map<String, dynamic>)['id'];
         await _client
             .from('daily_cash_records')
-            .update({'other_amount': amount}).eq('id', recordId);
+            .update(sanitizeJson({'other_amount': amount}))
+            .eq('id', recordId);
       }
     } catch (e) {
       // If no record found for this date, the amount is in bag_net_amounts only
@@ -1244,3 +1318,4 @@ class SupabaseService {
     }
   }
 }
+

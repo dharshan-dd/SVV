@@ -170,7 +170,11 @@ class _DayRecordEntryScreenState extends ConsumerState<DayRecordEntryScreen>
     super.dispose();
   }
 
-  double _d(TextEditingController c) => double.tryParse(c.text.trim()) ?? 0.0;
+  double _d(TextEditingController c) {
+    final v = double.tryParse(c.text.trim().replaceAll(',', ''));
+    if (v == null || !v.isFinite) return 0.0;
+    return v;
+  }
 
   double get _extraCollectionTotal => _extraCollections.fold(
       0.0, (s, e) => s + _d(e['amount'] as TextEditingController));
@@ -179,13 +183,30 @@ class _DayRecordEntryScreenState extends ConsumerState<DayRecordEntryScreen>
 
   List<Map<String, dynamic>> get _deductionDetails => _extraExpenses
       .map((e) => {
-            'reason': (e['reason'] as TextEditingController).text.trim().isEmpty
+            'type': 'additional_deduction',
+            'label': ((e['label'] as TextEditingController?)?.text ?? '').trim(),
+            'reason': ((e['reason'] as TextEditingController?)?.text ?? '').trim().isEmpty
                 ? 'Additional deduction'
-                : (e['reason'] as TextEditingController).text.trim(),
+                : ((e['reason'] as TextEditingController?)?.text ?? '').trim(),
             'amount': _d(e['amount'] as TextEditingController),
           })
       .where((item) => (item['amount'] as double) != 0)
       .toList(growable: false);
+
+  List<Map<String, dynamic>> get _collectionDetails => _extraCollections
+      .map((e) => {
+            'type': 'additional_collection',
+            'label': ((e['label'] as TextEditingController?)?.text ?? '').trim(),
+            'reason': ((e['reason'] as TextEditingController?)?.text ?? '').trim(),
+            'amount': _d(e['amount'] as TextEditingController),
+          })
+      .where((item) => (item['amount'] as double) != 0)
+      .toList(growable: false);
+
+  List<Map<String, dynamic>> get _submitDetails => [
+        ..._collectionDetails,
+        ..._deductionDetails,
+      ];
 
   Map<String, dynamic> get _trail =>
       CollectionCalculationService().calculateDayRecordTrail(
@@ -355,20 +376,7 @@ class _DayRecordEntryScreenState extends ConsumerState<DayRecordEntryScreen>
               previousFinalAmount: _prevFinal,
               additionalCollection: _extraCollectionTotal,
               additionalDeduction: _extraExpenseTotal,
-              deductionDetails: [
-                ..._extraCollections.map((e) => {
-                  'type': 'additional_collection',
-                  'label': e['label'],
-                  'amount': e['amount'],
-                  'reason': e['reason'],
-                }),
-                ..._extraExpenses.map((e) => {
-                  'type': 'additional_deduction',
-                  'label': e['label'],
-                  'amount': e['amount'],
-                  'reason': e['reason'],
-                }),
-              ],
+              deductionDetails: _submitDetails,
               extraNetAmount: _d(_extraNetCtrl),
             )
           : await svc.createDailyCashRecord(
@@ -390,20 +398,7 @@ class _DayRecordEntryScreenState extends ConsumerState<DayRecordEntryScreen>
               previousFinalAmount: _prevFinal,
               additionalCollection: _extraCollectionTotal,
               additionalDeduction: _extraExpenseTotal,
-              deductionDetails: [
-                ..._extraCollections.map((e) => {
-                  'type': 'additional_collection',
-                  'label': e['label'],
-                  'amount': e['amount'],
-                  'reason': e['reason'],
-                }),
-                ..._extraExpenses.map((e) => {
-                  'type': 'additional_deduction',
-                  'label': e['label'],
-                  'amount': e['amount'],
-                  'reason': e['reason'],
-                }),
-              ],
+              deductionDetails: _submitDetails,
               extraNetAmount: _d(_extraNetCtrl),
             );
 
