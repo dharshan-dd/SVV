@@ -1319,3 +1319,50 @@ class SupabaseService {
   }
 }
 
+
+class GPayNotSetUpException implements Exception {
+  final String message;
+  GPayNotSetUpException([this.message = 'GPay details table is not set up. Run supabase/GPAY_TRANSACTIONS.sql in the Supabase SQL Editor.']);
+  @override
+  String toString() => message;
+}
+
+  Future<List<Map<String,dynamic>>> getGPayTransactions({String? bagId, DateTime? startDate, DateTime? endDate, String? recordId}) async {
+    try {
+      var query = _client.from('gpay_transactions').select();
+      if(bagId!=null) query=query.eq('bag_id',bagId);
+      if(recordId!=null) query=query.eq('daily_cash_record_id',recordId);
+      if(startDate!=null) query=query.gte('entry_date',startDate.toIso8601String().split('T')[0]);
+      if(endDate!=null) query=query.lte('entry_date',endDate.toIso8601String().split('T')[0]);
+      final response = await query.order('received_at',ascending:false);
+      return List<Map<String,dynamic>>.from(response as List);
+    } catch(e){
+      final s=e.toString();
+      if(s.contains('42P01')||s.contains('PGRST202')||s.contains('PGRST205')) throw GPayNotSetUpException();
+      rethrow;
+    }
+  }
+
+  Future<void> replaceGPayTransactions({required String recordId, required List<Map<String,dynamic>> items}) async {
+    try {
+      await _client.rpc('replace_gpay_transactions',params:{'p_record_id':recordId,'p_items':items});
+    } catch(e){
+      final s=e.toString();
+      if(s.contains('42P01')||s.contains('PGRST202')||s.contains('PGRST205')) throw GPayNotSetUpException();
+      rethrow;
+    }
+  }
+
+  Future<List<Map<String,dynamic>>> findGPayReferenceDuplicates(String reference,String? excludeRecordId) async {
+    if(reference.trim().isEmpty)return [];
+    try {
+      final response = await _client.from('gpay_transactions').select('daily_cash_record_id,bag_id,entry_date,amount,reference').eq('reference',reference.trim());
+      final list=List<Map<String,dynamic>>.from(response as List);
+      if(excludeRecordId==null)return list;
+      return list.where((e)=>e['daily_cash_record_id']!=excludeRecordId).toList();
+    } catch(e){
+      final s=e.toString();
+      if(s.contains('42P01')||s.contains('PGRST202')||s.contains('PGRST205')) throw GPayNotSetUpException();
+      return [];
+    }
+  }
